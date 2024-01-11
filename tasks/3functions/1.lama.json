@@ -1,0 +1,65 @@
+{
+  "kind": "Scope",
+  "decls": [
+    [
+      "fac",
+      [
+        "Local",
+        {
+          "kind": "Fun",
+          "name": [ "n" ],
+          "body": {
+            "kind": "Scope",
+            "decls": [],
+            "body": {
+              "kind": "If",
+              "cond": {
+                "kind": "Binop",
+                "name": "==",
+                "l": { "kind": "Var", "value": "n" },
+                "r": { "kind": "Const", "value": 1 }
+              },
+              "r": {
+                "kind": "Scope",
+                "decls": [],
+                "body": { "kind": "Const", "value": 1 }
+              },
+              "r": {
+                "kind": "Scope",
+                "decls": [],
+                "body": {
+                  "kind": "Binop",
+                  "name": "*",
+                  "l": { "kind": "Var", "value": "n" },
+                  "r": {
+                    "kind": "Call",
+                    "f": { "kind": "Var", "value": "fac" },
+                    "args": [
+                      {
+                        "kind": "Binop",
+                        "name": "-",
+                        "l": { "kind": "Var", "value": "n" },
+                        "r": { "kind": "Const", "value": 1 }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    ]
+  ],
+  "body": {
+    "kind": "Call",
+    "f": { "kind": "Var", "value": "write" },
+    "args": [
+      {
+        "kind": "Call",
+        "f": { "kind": "Var", "value": "fac" },
+        "args": [ { "kind": "Const", "value": 4 } ]
+      }
+    ]
+  }
+}

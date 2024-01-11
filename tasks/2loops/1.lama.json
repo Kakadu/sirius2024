@@ -1,0 +1,69 @@
+{
+  "kind": "Scope",
+  "decls": [
+    [
+      "n",
+      [
+        "Local",
+        { "kind": "Variable", "payload": { "kind": "Const", "value": 4 } }
+      ]
+    ],
+    [
+      "acc",
+      [
+        "Local",
+        { "kind": "Variable", "payload": { "kind": "Const", "value": 1 } }
+      ]
+    ]
+  ],
+  "body": {
+    "kind": "Seq",
+    "l": {
+      "kind": "While",
+      "cond": {
+        "kind": "Binop",
+        "name": ">",
+        "l": { "kind": "Var", "value": "n" },
+        "r": { "kind": "Const", "value": 1 }
+      },
+      "body": {
+        "kind": "Scope",
+        "decls": [],
+        "body": {
+          "kind": "Seq",
+          "l": {
+            "kind": "Ignore",
+            "value": {
+              "kind": "Assign",
+              "l": { "kind": "Ref", "value": "acc" },
+              "r": {
+                "kind": "Binop",
+                "name": "*",
+                "l": { "kind": "Var", "value": "acc" },
+                "r": { "kind": "Var", "value": "n" }
+              }
+            }
+          },
+          "r": {
+            "kind": "Ignore",
+            "value": {
+              "kind": "Assign",
+              "l": { "kind": "Ref", "value": "n" },
+              "r": {
+                "kind": "Binop",
+                "name": "-",
+                "l": { "kind": "Var", "value": "n" },
+                "r": { "kind": "Const", "value": 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "r": {
+      "kind": "Call",
+      "f": { "kind": "Var", "value": "write" },
+      "args": [ { "kind": "Var", "value": "acc" } ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+(rule
+ (deps
+  (:lama 1fac.lama))
+ (targets 1.lama.json)
+ (mode (promote))
+ (action
+  (run
+   %{project_root}/json/json_bytecode.exe
+   -path
+   ../../../runtime
+   -o
+   %{targets}
+   -src2json
+   %{lama})))
+
+(rule
+ (deps
+  (:lama 2fib.lama))
+ (targets 2.lama.json)
+ (mode (promote))
+ (action
+  (run
+   %{project_root}/json/json_bytecode.exe
+   -path
+   ../../../runtime
+   -o
+   %{targets}
+   -src2json
+   %{lama})))

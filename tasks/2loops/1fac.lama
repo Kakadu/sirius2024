@@ -1,0 +1,10 @@
+var n = 4;
+
+var acc = 1;
+
+while n>1 do
+      acc   := acc*n;
+      n     := n-1
+od;
+
+write (acc)

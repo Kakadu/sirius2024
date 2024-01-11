@@ -1,0 +1,17 @@
+{
+  "kind": "Scope",
+  "decls": [
+    [
+      "x",
+      [
+        "Local",
+        { "kind": "Variable", "payload": { "kind": "Const", "value": 1 } }
+      ]
+    ]
+  ],
+  "body": {
+    "kind": "Call",
+    "f": { "kind": "Var", "value": "write" },
+    "args": [ { "kind": "Var", "value": "x" } ]
+  }
+}

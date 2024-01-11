@@ -1,0 +1,141 @@
+{
+  "kind": "Scope",
+  "decls": [
+    [ "n", [ "Local", { "kind": "Variable" } ] ],
+    [ "fib_1", [ "Local", { "kind": "Variable" } ] ],
+    [ "fib_2", [ "Local", { "kind": "Variable" } ] ],
+    [ "fib", [ "Local", { "kind": "Variable" } ] ],
+    [ "i", [ "Local", { "kind": "Variable" } ] ]
+  ],
+  "body": {
+    "kind": "Seq",
+    "l": {
+      "kind": "Ignore",
+      "value": {
+        "kind": "Assign",
+        "l": { "kind": "Ref", "value": "n" },
+        "r": {
+          "kind": "Call",
+          "f": { "kind": "Var", "value": "read" },
+          "args": []
+        }
+      }
+    },
+    "r": {
+      "kind": "Seq",
+      "l": {
+        "kind": "Ignore",
+        "value": {
+          "kind": "Assign",
+          "l": { "kind": "Ref", "value": "i" },
+          "r": { "kind": "Const", "value": 2 }
+        }
+      },
+      "r": {
+        "kind": "Seq",
+        "l": {
+          "kind": "Ignore",
+          "value": {
+            "kind": "Assign",
+            "l": { "kind": "Ref", "value": "fib_1" },
+            "r": { "kind": "Const", "value": 1 }
+          }
+        },
+        "r": {
+          "kind": "Seq",
+          "l": {
+            "kind": "Ignore",
+            "value": {
+              "kind": "Assign",
+              "l": { "kind": "Ref", "value": "fib_2" },
+              "r": { "kind": "Const", "value": 1 }
+            }
+          },
+          "r": {
+            "kind": "Seq",
+            "l": {
+              "kind": "Ignore",
+              "value": {
+                "kind": "Assign",
+                "l": { "kind": "Ref", "value": "fib" },
+                "r": { "kind": "Const", "value": 1 }
+              }
+            },
+            "r": {
+              "kind": "Seq",
+              "l": {
+                "kind": "While",
+                "cond": {
+                  "kind": "Binop",
+                  "name": "<",
+                  "l": { "kind": "Var", "value": "i" },
+                  "r": { "kind": "Var", "value": "n" }
+                },
+                "body": {
+                  "kind": "Scope",
+                  "decls": [],
+                  "body": {
+                    "kind": "Seq",
+                    "l": {
+                      "kind": "Ignore",
+                      "value": {
+                        "kind": "Assign",
+                        "l": { "kind": "Ref", "value": "fib" },
+                        "r": {
+                          "kind": "Binop",
+                          "name": "+",
+                          "l": { "kind": "Var", "value": "fib_1" },
+                          "r": { "kind": "Var", "value": "fib_2" }
+                        }
+                      }
+                    },
+                    "r": {
+                      "kind": "Seq",
+                      "l": {
+                        "kind": "Ignore",
+                        "value": {
+                          "kind": "Assign",
+                          "l": { "kind": "Ref", "value": "fib_2" },
+                          "r": { "kind": "Var", "value": "fib_1" }
+                        }
+                      },
+                      "r": {
+                        "kind": "Seq",
+                        "l": {
+                          "kind": "Ignore",
+                          "value": {
+                            "kind": "Assign",
+                            "l": { "kind": "Ref", "value": "fib_1" },
+                            "r": { "kind": "Var", "value": "fib" }
+                          }
+                        },
+                        "r": {
+                          "kind": "Ignore",
+                          "value": {
+                            "kind": "Assign",
+                            "l": { "kind": "Ref", "value": "i" },
+                            "r": {
+                              "kind": "Binop",
+                              "name": "+",
+                              "l": { "kind": "Var", "value": "i" },
+                              "r": { "kind": "Const", "value": 1 }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "r": {
+                "kind": "Call",
+                "f": { "kind": "Var", "value": "write" },
+                "args": [ { "kind": "Var", "value": "fib" } ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

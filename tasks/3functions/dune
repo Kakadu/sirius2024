@@ -1,0 +1,16 @@
+(rule
+ (deps
+  (:lama 1.lama))
+ (targets 1.lama.json)
+ (mode (promote))
+ (action
+  (progn
+   ;(run ls ../../../runtime)
+   (run
+    %{project_root}/json/json_bytecode.exe
+    -path
+    ../../../runtime
+    -o
+    %{targets}
+    -src2json
+    %{lama}))))
