@@ -1,0 +1,46 @@
+name: Build master
+
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'exam.md'
+      branches:
+      - 'master'
+env:
+  OPAMROOT: /home/user/.opam
+  OPAMYES: true
+
+jobs:
+  build:
+    defaults:
+      run:
+        shell: bash
+
+    runs-on: ubuntu-latest
+    container:
+      image: kakadu18/ocaml:sirius2023
+      #options: --user user
+      #options: -v /__w/test-ocaml-ci-docker/test-ocaml-ci-docker:/home/user/:rw -w /home/user/
+
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+        fetch-depth: 0
+        #  path: /__w/test-ocaml-ci-docker/test-ocaml-ci-docker
+
+      - run: |
+          python3 -m venv venv
+          source venv/bin/activate && pip3 install cram
+
+      - name: Test exprs
+        run: |
+          source venv/bin/activate && cram ./expr.t
+
+
