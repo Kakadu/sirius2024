@@ -43,6 +43,6 @@ jobs:
 
       - name: Test exprs
         run: |
-          source venv/bin/activate && cram ./expr.t
+          source venv/bin/activate && opam exec -- cram ./expr.t
 
 
