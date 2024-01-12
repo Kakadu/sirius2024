@@ -5,8 +5,9 @@ on:
     paths-ignore:
       - 'README.md'
       - 'exam.md'
-      branches:
+    branches:
       - 'master'
+
 env:
   OPAMROOT: /home/user/.opam
   OPAMYES: true
