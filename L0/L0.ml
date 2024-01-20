@@ -40,7 +40,8 @@ module Program =
     with show
 
     let empty x = failwith (Printf.sprintf "undefined variable \"%s\"" x)
-  
+    let update st x n y = if y = x then n else st y
+
     let rec eval st = function
     | Var   x -> st x
     | Const n -> n
@@ -129,7 +130,13 @@ module Parser =
       | x:LIDENT  {Program.Var x}
       | -"(" expr -")";
       
-      expr: expression[primary]
+      expr: expression[primary];
+
+      state: state_chain[Program.empty];
+
+      state_chain[st]:
+        !(Combinators.empty) {st}    
+      | -x:LIDENT -"=" -n:DECIMAL -"," state_chain[Program.update st x n]        
     )
 
     let parse =
