@@ -72,3 +72,33 @@
 \end{array}
 \]
 
+\section{Абстрактная стековая машина}
+
+Инструкции:
+
+\[
+\begin{array}{rcl}
+  \mathcal{I} & = & \cd{CONST}\;n\\
+              &   & \cd{LD}\;x\\
+              &   & \cd{BINOP}\;\oplus
+\end{array}
+\]
+
+Программы:
+
+\[
+\begin{array}{rcl}
+  \mathcal{P} & = & \epsilon \\
+              &   & i\,p
+\end{array}
+\]
+
+Семантика:
+
+\[
+\trans{\inbr{st,\,s}}{\epsilon}{\inbr{st,\,s}}\ruleno{Empty}
+\]
+\[
+\trule{}
+      {\trans{\inbr{}}{\cd{LD}\,x}{c}}\ruleno{LD}
+\]

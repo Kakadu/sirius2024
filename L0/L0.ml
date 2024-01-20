@@ -138,6 +138,23 @@ module Parser =
         !(Combinators.empty) {st}    
       | -x:LIDENT -"=" -n:DECIMAL -"," state_chain[Program.update st x n]        
     )
+   
+    let parse_state =
+      let kws = [] in
+      fun s ->
+        parse
+          (object (self : 'self)
+            inherit Matcher.t s
+            inherit Util.Lexers.decimal s
+            inherit Util.Lexers.skip [
+                Matcher.Skip.whitespaces " \t\n\r";
+                Matcher.Skip.lineComment "--";
+                Matcher.Skip.nestedComment "(*" "*)"
+              ] s
+            inherit Util.Lexers.lident kws s
+          end
+          )
+          (ostap (state -EOF))
 
     let parse =
       let kws = [] in

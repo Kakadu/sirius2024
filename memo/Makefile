@@ -1,6 +1,6 @@
 .PHONY: celan clean all might might-weasel might-passive might-dups
 
-MAIN=code-model
+MAIN=main
 .PHONY: $(MAIN).pdf clean
 
 all: $(MAIN).pdf

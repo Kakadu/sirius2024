@@ -260,6 +260,23 @@ module Parser =
       input: !(Util.list)[ostap (DECIMAL)]
     )
 
+    let parse_input =
+      let kws = [] in
+      fun s ->
+        parse
+          (object (self : 'self)
+            inherit Matcher.t s
+            inherit Util.Lexers.decimal s
+            inherit Util.Lexers.skip [
+                Matcher.Skip.whitespaces " \t\n\r";
+                Matcher.Skip.lineComment "--";
+                Matcher.Skip.nestedComment "(*" "*)"
+              ] s
+            inherit Util.Lexers.lident kws s
+          end
+          )
+          (ostap (input -EOF))
+
     let parse =
       let kws = ["skip"; "if"; "fi"; "then"; "else"; "do"; "od"; "while"] in
       fun s ->
