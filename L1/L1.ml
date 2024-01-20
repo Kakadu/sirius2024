@@ -255,7 +255,9 @@ module Parser =
         match t with
         | None   -> h
         | Some t -> Program.Seq (h, t)
-      }      
+      };
+
+      input: !(Util.list)[ostap (DECIMAL)]
     )
 
     let parse =
