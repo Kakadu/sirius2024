@@ -58,6 +58,8 @@ module Names = struct
 
   let bytecode_src = "bc-json-area"
   let bytecode_output = "bc-program-ouput"
+  let compileLamaBtn = "compileLamaBtn"
+  let runBcBtn = "runBcBtn"
 end
 
 let get_and_coerce name dest = 
@@ -111,6 +113,8 @@ let on_lama_changed =
         ())
     in 
     area##.oninput := Dom.handler (fun _ -> on_input(); Js._true);
+    (get_and_coerce Names.compileLamaBtn Dom_html.CoerceTo.button)##.onclick := 
+      Dom.handler (fun _ -> on_input (); Js._true);
     on_input
 
 (* Bytecode *)
@@ -150,6 +154,8 @@ let on_bytecode_changed : unit -> unit =
         ())
     in
   area##.oninput := Dom.handler (fun _ -> on_input (); Js._true);
+  (get_and_coerce Names.runBcBtn Dom_html.CoerceTo.button)##.onclick := 
+    Dom.handler (fun _ -> on_input (); Js._true);
   on_input
   
 (* ENV *)

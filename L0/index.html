@@ -111,7 +111,7 @@
 
         #right {
             /* width: 35vw; */
-            width: 300pt;
+            width: 380pt;
             height: 85vh;
             margin: 10px;
             display: inline-block;
@@ -150,9 +150,10 @@
             float: right;
         }
 
-        .generated_label {
-            border-style: dotted;
-            border-width: thin;
+        .user-input-area {
+            font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+            font-size: 16px;
+            font-weight: 500;
         }
 
         #compileLamaBtn,
@@ -174,7 +175,7 @@
 <body>
     <div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
         <div class="mdl-tabs__tab-bar">
-            <a href="#starks-panel" class="mdl-tabs__tab is-active">Run bytecode</a>
+            <a href="#starks-panel" class="mdl-tabs__tab is-active">язык номер ноль</a>
             <!-- <a href="#lama2json-panel" class="mdl-tabs__tab">Lama to JSON</a> -->
             <!-- <a href="#guideline-panel" class="mdl-tabs__tab">Guideline</a> -->
             <!-- <a href="#settings-panel" class="mdl-tabs__tab">Constants</a> -->
@@ -182,18 +183,21 @@
 
         <div class="mdl-tabs__panel is-active" id="starks-panel">
             <div id="left">
-                Значения переменных тут
-                <textarea id="env-area"></textarea>
+                <h5 style="margin: 10px;">Значения переменных вводить ниже</h5>
+                <textarea id="env-area" class="user-input-area"></textarea>
                 <br />
                 <div id="env-area-status"></div>
             </div>
             <div id="center">
                 <button id="compileLamaBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
-                    ИСПОЛНИТь ПРОГРАММУ
+                    ИСПОЛНИТЬ ПРОГРАММУ
                 </button>
                 <br />
-                <label style="margin: 10px;">Код на языке программировния ниже</label>
-                <textarea id="lama-src-area"></textarea>
+                <!-- <label style="margin: 10px;">Код на языке программировния ниже</label> -->
+                <!-- <div class="section__text mdl-cell mdl-cell--10-col-desktop"> -->
+                <h5 style="margin: 10px;">Код на языке программировния ниже:</h5>
+                <!-- </div> -->
+                <textarea id="lama-src-area" class="user-input-area"></textarea>
                 <br />
                 <label style="margin: 10px;">Результат исполнения ниже</label>
                 <div id="lama-program-output" style="margin: 10px;"></div>
@@ -210,67 +214,16 @@
                     ИСПОЛНИТЬ БАЙТКОД
                 </button>
                 <label style="margin: 10px;">Сюда положить JSON байткода</label>
-                <textarea id="bc-json-area"></textarea>
+                <textarea id="bc-json-area" class="user-input-area"></textarea>
                 <label style="margin: 10px;">Результат исполнения байткода тут</label>
                 <pre id="bc-program-ouput" />
             </div>
         </div>
-        <!-- <div class="mdl-tabs__panel" id="lama2json-panel">
-            <div id="left_lama2json">
-                <button id="lamaToJsonBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
-                    Lama to JSON
-                </button>
-                <label class="mdl-typography--subhead mdl-typography--text-center" style="display: flex;" for="demos">
-                    Choose a demo:
-                </label>
-                <select name="demos" id="lamaDemos" class="mdl-textfield__input">
-
-                </select>
-            </div>
-            <div id="output_lama2json">
-                Out will be here
-            </div>
-        </div> -->
     </div>
-
-    <!--
-    <div class="demo-blog mdl-layout mdl-js-layout is-upgraded">
-        <main class="mdl-layout__content">
-            <div class="demo-blog__posts mdl-grid">
-                <div class="mdl-card coffee-pic mdl-cell mdl-cell--8-col mdl-cell--4-col-desktop">
-                    <div class="mdl-card__media mdl-color-text--grey-50">
-                        <h3><a href="entry.html">Coffee Pic</a></h3>
-                        
+    <div id="demo-snackbar-example" class="mdl-js-snackbar mdl-snackbar">
+        <div class="mdl-snackbar__text"></div>
+        <button class="mdl-snackbar__action" type="button"></button>
     </div>
-    <div class="mdl-card__supporting-text meta mdl-color-text--grey-600">
-        <div class="minilogo"></div>
-        <div>
-            <strong>The Newist</strong>
-            <span>2 days ago</span>
-        </div>
-    </div>
-    </div>
-    <div class="mdl-card something-else mdl-cell mdl-cell--8-col ">
-        <div class="mdl-card__media mdl-color--white mdl-color-text--grey-600">
-            <textarea class="mdl-textfield__input" id="my-text-area" type="text" rows="3"
-                id="text-area">asdfasdf </textarea>
-        </div>
-        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-            <select class="mdl-textfield__input" id="demos" name="octane">
-
-            </select>
-            <label class="mdl-textfield__label" for="octane">Octane</label>
-        </div>
-
-    </div>
-
-    </div>
-
-    </main>
-    <div class="mdl-layout__obfuscator"></div>
-    </div>
-    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
-    -->
     <script src="client.bc.js"></script>
 </body>
 
