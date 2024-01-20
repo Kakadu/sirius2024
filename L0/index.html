@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title>Material Design Lite</title>
+
+    <!-- Add to homescreen for Chrome on Android -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <!-- <link rel="icon" sizes="192x192" href="images/android-desktop.png"> -->
+
+    <!-- Add to homescreen for Safari on iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Material Design Lite">
+    <link rel="apple-touch-icon-precomposed" href="images/ios-desktop.png">
+
+    <!-- Tile icon for Win8 (144x144 + tile color) -->
+    <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
+    <meta name="msapplication-TileColor" content="#3372DF">
+    <!-- 
+    <link rel="shortcut icon" href="images/favicon.png"> -->
+
+    <!-- SEO: If your mobile URL is different from the desktop URL, add a canonical link to the desktop page https://developers.google.com/webmasters/smartphone-sites/feature-phones -->
+    <!--
+    <link rel="canonical" href="http://www.example.com/">
+    -->
+
+    <!-- <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon"> -->
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
+    <!-- <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.grey-orange.min.css">
+    <link rel="stylesheet" href="styles.css"> -->
+    <!-- Material Design Lite -->
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <!-- Material Design icon font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <!-- <style>
+        #view-source {
+            position: fixed;
+            display: block;
+            right: 0;
+            bottom: 0;
+            margin-right: 40px;
+            margin-bottom: 40px;
+            z-index: 900;
+        }
+
+        #my-text-area {
+            min-height: 400px;
+
+        }
+    </style> -->
+    <style type="text/css">
+        #root {
+            height: vh;
+            width: 100%;
+            font-size: 0;
+            display: block;
+        }
+
+        #top {
+            font-size: 12px;
+            display: flex;
+        }
+
+        #top>* {
+            margin: 0px 50px 0px 0px;
+        }
+
+        #left,
+        #output_area {
+            display: inline-block;
+            /* zoom: 1;  */
+            vertical-align: top;
+            font-size: 12px;
+        }
+
+        #left_lama2json,
+        #output_lama2json {
+            display: inline-block;
+            /* zoom: 1;  */
+            vertical-align: top;
+            font-size: 12px;
+        }
+
+        #left,
+        #left_lama2json {
+            /* width: 35vw; */
+            width: 200pt;
+            height: 85vh;
+            margin: 10px;
+        }
+
+        #center {
+            /* width: 35vw; */
+            width: 400pt;
+
+            height: 85vh;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        #right {
+            /* width: 35vw; */
+            width: 300pt;
+            height: 85vh;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        #lama-src-area,
+        #bc-json-area {
+            /* width: 35vw; */
+            width: 380pt;
+            height: 250pt;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        #lama-json-area {
+            width: 35vw;
+            height: 85vh;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        #input_area,
+        #input_area_lama2json {
+            width: 35vw;
+            height: 65vh;
+            background: rgb(186, 186, 225);
+        }
+
+        #output_area #output_area_json {
+            width: 65vw;
+            height: 100vh;
+            /* height: 300px; */
+            /*background: rgb(154, 210, 154); */
+            margin: 10px;
+            overflow: auto;
+            float: right;
+        }
+
+        .generated_label {
+            border-style: dotted;
+            border-width: thin;
+        }
+
+        #compileLamaBtn,
+        #runBcBtn {
+            margin-bottom: 5px;
+            margin: 10px;
+            /* width: 35vw; */
+            width: 350pt;
+        }
+
+        #env-area {
+            width: 15vw;
+            height: 200px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
+        <div class="mdl-tabs__tab-bar">
+            <a href="#starks-panel" class="mdl-tabs__tab is-active">Run bytecode</a>
+            <!-- <a href="#lama2json-panel" class="mdl-tabs__tab">Lama to JSON</a> -->
+            <!-- <a href="#guideline-panel" class="mdl-tabs__tab">Guideline</a> -->
+            <!-- <a href="#settings-panel" class="mdl-tabs__tab">Constants</a> -->
+        </div>
+
+        <div class="mdl-tabs__panel is-active" id="starks-panel">
+            <div id="left">
+                Значения переменных тут
+                <textarea id="env-area"></textarea>
+                <br />
+                <div id="env-area-status"></div>
+            </div>
+            <div id="center">
+                <button id="compileLamaBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+                    ИСПОЛНИТь ПРОГРАММУ
+                </button>
+                <br />
+                <label style="margin: 10px;">Код на языке программировния ниже</label>
+                <textarea id="lama-src-area"></textarea>
+                <br />
+                <label style="margin: 10px;">Результат исполнения ниже</label>
+                <div id="lama-program-output" style="margin: 10px;"></div>
+                <hr />
+                <label style="margin: 10px;">JSON представление программы</label>
+                <pre id="src-json-area" style="margin: 10px;"></pre>
+                <!-- <label class="mdl-typography--subhead mdl-typography--text-center" style="display: flex;" for="demos">
+                    Choose a demo:
+                </label>
+                <select name="demos" id="demos" class="mdl-textfield__input"></select> -->
+            </div>
+            <div id="right">
+                <button id="runBcBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+                    ИСПОЛНИТЬ БАЙТКОД
+                </button>
+                <label style="margin: 10px;">Сюда положить JSON байткода</label>
+                <textarea id="bc-json-area"></textarea>
+                <label style="margin: 10px;">Результат исполнения байткода тут</label>
+                <pre id="bc-program-ouput" />
+            </div>
+        </div>
+        <!-- <div class="mdl-tabs__panel" id="lama2json-panel">
+            <div id="left_lama2json">
+                <button id="lamaToJsonBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+                    Lama to JSON
+                </button>
+                <label class="mdl-typography--subhead mdl-typography--text-center" style="display: flex;" for="demos">
+                    Choose a demo:
+                </label>
+                <select name="demos" id="lamaDemos" class="mdl-textfield__input">
+
+                </select>
+            </div>
+            <div id="output_lama2json">
+                Out will be here
+            </div>
+        </div> -->
+    </div>
+
+    <!--
+    <div class="demo-blog mdl-layout mdl-js-layout is-upgraded">
+        <main class="mdl-layout__content">
+            <div class="demo-blog__posts mdl-grid">
+                <div class="mdl-card coffee-pic mdl-cell mdl-cell--8-col mdl-cell--4-col-desktop">
+                    <div class="mdl-card__media mdl-color-text--grey-50">
+                        <h3><a href="entry.html">Coffee Pic</a></h3>
+                        
+    </div>
+    <div class="mdl-card__supporting-text meta mdl-color-text--grey-600">
+        <div class="minilogo"></div>
+        <div>
+            <strong>The Newist</strong>
+            <span>2 days ago</span>
+        </div>
+    </div>
+    </div>
+    <div class="mdl-card something-else mdl-cell mdl-cell--8-col ">
+        <div class="mdl-card__media mdl-color--white mdl-color-text--grey-600">
+            <textarea class="mdl-textfield__input" id="my-text-area" type="text" rows="3"
+                id="text-area">asdfasdf </textarea>
+        </div>
+        <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+            <select class="mdl-textfield__input" id="demos" name="octane">
+
+            </select>
+            <label class="mdl-textfield__label" for="octane">Octane</label>
+        </div>
+
+    </div>
+
+    </div>
+
+    </main>
+    <div class="mdl-layout__obfuscator"></div>
+    </div>
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    -->
+    <script src="client.bc.js"></script>
+</body>
+
+</html>
