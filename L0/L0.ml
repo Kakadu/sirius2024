@@ -132,11 +132,9 @@ module Parser =
       
       expr: expression[primary];
 
-      state: state_chain[Program.empty];
-
-      state_chain[st]:
-        !(Combinators.empty) {st}    
-      | -x:LIDENT -"=" -n:DECIMAL state_chain[Program.update st x n]        
+      state: s:(LIDENT -"=" DECIMAL)* {
+        List.fold_left (fun st (x, n) -> Program.update st x n) Program.empty s     
+      }
     )
    
     let parse_state =
