@@ -4,8 +4,8 @@ OCAMLOPT = ocamlfind opt
 OCAMLDEP = ocamlfind dep
 SOURCES = L0.ml LibSerialize.ml
 CAMLP5  = -syntax camlp5o -package ostap.syntax,GT.syntax,GT.syntax.all 
-PXFLAGS = $(CAMLP5)
-BFLAGS = -rectypes -g -w -13-58 -package GT,ostap,unix,yojson
+PXFLAGS := $(CAMLP5)
+BFLAGS := -rectypes -g -w -13-58 -package GT,ostap,unix,yojson
 OFLAGS = $(BFLAGS)
 PPX_EXE=ppx.exe
 PPX_MAIN=ppx_rewriter_main.ml
@@ -47,21 +47,27 @@ clean:
 $(TOPFILE).bc.js: $(TOPFILE).byte
 	js_of_ocaml --debug-info --no-inline --source-map --pretty $< -o $@
 
-jsL0.cmo: BFLAGS += -I .
-jsL0.cmo: L0.cma
-jsL0.byte: BFLAGS += -package js_of_ocaml
+L0.byte: L0.cmo
+	ocamlfind c -package ostap,GT L0.cmo -linkpkg -o $@
+
+#jsL0.cmo: BFLAGS += -I .
+#jsL0.cmo: L0.cma
+#jsL0.byte: BFLAGS += -package js_of_ocaml
 jsL0.byte: jsL0.cmo 
-	$(OCAMLC) -o $@ $(BFLAGS) -linkpkg L0.cmo $<
+	$(OCAMLC) -o $@ $(BFLAGS) -package js_of_ocaml  -linkpkg L0.cmo $<
 
 jsL0.bc.js: jsL0.byte
 	js_of_ocaml --debug-info --no-inline --source-map --pretty $< -o $@
+client.cmo: LibSerialize.cmo
+client.cmo: client.ml 
+	$(OCAMLC) -g -c $(BFLAGS) -pp "./$(PPX_EXE)" $<
 
-client.cmo: BFLAGS += -I . -package js_of_ocaml
-client.cmo: PXFLAGS = -pp "./$(PPX_EXE)"
-client.cmo: L0.cma ppx.exe
+#client.cmo: BFLAGS += -I . -package js_of_ocaml
+#client.cmo: PXFLAGS := -pp "./$(PPX_EXE)"
+#client.cmo: L0.cma ppx.exe
 client.byte: BFLAGS += -package js_of_ocaml
 client.byte: client.cmo 
-	$(OCAMLC) -o $@ $(BFLAGS) -linkpkg L0.cmo LibSerialize.cmo $<
+	$(OCAMLC) -g -o $@ -pp "./$(PPX_EXE)" -package GT,ostap,js_of_ocaml,yojson -linkpkg L0.cmo LibSerialize.cmo $<
 
 client.bc.js: client.byte
 	js_of_ocaml --debug-info --no-inline --source-map --pretty $< -o $@

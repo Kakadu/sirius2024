@@ -172,3 +172,8 @@ module Parser =
           (ostap (expr -EOF))
  
   end
+
+  let () = 
+  match Parser.parse_state "x=1" with 
+  | `Ok _ -> print_endline "OK"
+  | `Fail s -> print_endline s

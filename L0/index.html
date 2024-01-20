@@ -94,9 +94,43 @@
 
         #left,
         #left_lama2json {
+            /* width: 35vw; */
+            width: 200pt;
+            height: 85vh;
+            margin: 10px;
+        }
+
+        #center {
+            /* width: 35vw; */
+            width: 400pt;
+
+            height: 85vh;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        #right {
+            /* width: 35vw; */
+            width: 300pt;
+            height: 85vh;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        #lama-src-area,
+        #bc-json-area {
+            /* width: 35vw; */
+            width: 380pt;
+            height: 250pt;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        #lama-json-area {
             width: 35vw;
             height: 85vh;
             margin: 10px;
+            display: inline-block;
         }
 
         #input_area,
@@ -116,65 +150,22 @@
             float: right;
         }
 
-        #guideline_area {
-            width: 98vw;
-            height: 85vh;
-            padding: 2vw;
-            font-family: Monospace;
-        }
-
-        #settings_area {
-            width: 95vw;
-            height: 50vh;
-            padding: 5vw;
-            font-family: Monospace;
-        }
-
         .generated_label {
             border-style: dotted;
             border-width: thin;
         }
 
-
-        #send1 {
+        #compileLamaBtn,
+        #runBcBtn {
             margin-bottom: 5px;
+            margin: 10px;
+            /* width: 35vw; */
+            width: 350pt;
         }
 
-        #parsing_modes {
-            width: 200px;
-            padding-left: 5px;
-            display: inline-block;
-        }
-
-        .example_container {
-            /* zoom: 1;  */
-            font-size: larger;
-            height: 250px;
-        }
-
-        /* Tooltip text */
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 120px;
-            background-color: black;
-            color: #fff;
-            text-align: center;
-            padding: 5px 0;
-            border-radius: 6px;
-
-            /* Position the tooltip text - see examples below! */
-            position: absolute;
-            z-index: 1;
-        }
-
-        /* Show the tooltip text when you mouse over the tooltip container */
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-        }
-
-        .temp_storage {
-            visibility: hidden;
-            height: 0px;
+        #env-area {
+            width: 15vw;
+            height: 200px;
         }
     </style>
 
@@ -184,26 +175,47 @@
     <div class="mdl-tabs mdl-js-tabs mdl-js-ripple-effect">
         <div class="mdl-tabs__tab-bar">
             <a href="#starks-panel" class="mdl-tabs__tab is-active">Run bytecode</a>
-            <a href="#lama2json-panel" class="mdl-tabs__tab">Lama to JSON</a>
+            <!-- <a href="#lama2json-panel" class="mdl-tabs__tab">Lama to JSON</a> -->
             <!-- <a href="#guideline-panel" class="mdl-tabs__tab">Guideline</a> -->
             <!-- <a href="#settings-panel" class="mdl-tabs__tab">Constants</a> -->
         </div>
 
         <div class="mdl-tabs__panel is-active" id="starks-panel">
             <div id="left">
-                <button id="send1" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
-                    Run bytecode
+                Значения переменных тут
+                <textarea id="env-area"></textarea>
+                <br />
+                <div id="env-area-status"></div>
+            </div>
+            <div id="center">
+                <button id="compileLamaBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+                    ИСПОЛНИТь ПРОГРАММУ
                 </button>
-                <label class="mdl-typography--subhead mdl-typography--text-center" style="display: flex;" for="demos">
+                <br />
+                <label style="margin: 10px;">Код на языке программировния ниже</label>
+                <textarea id="lama-src-area"></textarea>
+                <br />
+                <label style="margin: 10px;">Результат исполнения ниже</label>
+                <div id="lama-program-output" style="margin: 10px;"></div>
+                <hr />
+                <label style="margin: 10px;">JSON представление программы</label>
+                <pre id="src-json-area" style="margin: 10px;"></pre>
+                <!-- <label class="mdl-typography--subhead mdl-typography--text-center" style="display: flex;" for="demos">
                     Choose a demo:
                 </label>
-                <select name="demos" id="demos" class="mdl-textfield__input"></select>
+                <select name="demos" id="demos" class="mdl-textfield__input"></select> -->
             </div>
-            <div id="output_area">
-                Out will be here
+            <div id="right">
+                <button id="runBcBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
+                    ИСПОЛНИТЬ БАЙТКОД
+                </button>
+                <label style="margin: 10px;">Сюда положить JSON байткода</label>
+                <textarea id="bc-json-area"></textarea>
+                <label style="margin: 10px;">Результат исполнения байткода тут</label>
+                <pre id="bc-program-ouput" />
             </div>
         </div>
-        <div class="mdl-tabs__panel" id="lama2json-panel">
+        <!-- <div class="mdl-tabs__panel" id="lama2json-panel">
             <div id="left_lama2json">
                 <button id="lamaToJsonBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
                     Lama to JSON
@@ -218,7 +230,7 @@
             <div id="output_lama2json">
                 Out will be here
             </div>
-        </div>
+        </div> -->
     </div>
 
     <!--
