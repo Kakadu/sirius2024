@@ -136,7 +136,7 @@ module Parser =
 
       state_chain[st]:
         !(Combinators.empty) {st}    
-      | -x:LIDENT -"=" -n:DECIMAL -"," state_chain[Program.update st x n]        
+      | -x:LIDENT -"=" -n:DECIMAL state_chain[Program.update st x n]        
     )
    
     let parse_state =

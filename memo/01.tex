@@ -99,6 +99,25 @@
 \trans{\inbr{st,\,s}}{\epsilon}{\inbr{st,\,s}}\ruleno{Empty}
 \]
 \[
-\trule{}
-      {\trans{\inbr{}}{\cd{LD}\,x}{c}}\ruleno{LD}
+\trule{\trans{\inbr{st,\,(st\,x)s}}{p}{c}}
+      {\trans{\inbr{st,\,s}}{[\cd{LD}\,x]p}{c}}\ruleno{LD}
 \]
+\[
+\trule{\trans{\inbr{st,\,ns}}{p}{c}}
+      {\trans{\inbr{st,\,s}}{[\cd{CONST}\,n]p}{c}}\ruleno{CONST}
+\]
+\[
+\trule{\trans{\inbr{st,\,(y\otimes x)s}}{p}{c}}
+      {\trans{\inbr{st,\,xys}}{[\cd{BINOP}\oplus]p}{c}}\ruleno{BINOP}
+\]      
+
+\section{Свойства семантики}
+
+\begin{enumerate}
+\item Детерминизм: если $\trans{st}{e}{n}$ и $\trans{st}{e}{m}$ то $n=m$.
+
+\item Строгость: если для произвольного $e^\prime\preceq e$ и произвольного $st$
+$\trans{st}{e^\prime}{\bot}$ то $\trans{st}{e}{\bot}$.
+
+  Здесь ``$\preceq$''~--- отношение ``быть подвыражением``.
+\end{enumerate}
