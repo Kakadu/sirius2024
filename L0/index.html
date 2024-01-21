@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-    <title>Material Design Lite</title>
+    <title>Язык номер ноль</title>
 
     <!-- Add to homescreen for Chrome on Android -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -164,6 +164,13 @@
             width: 350pt;
         }
 
+        #env-area-status {
+            color: red;
+            font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+            /* font-size: 16px;
+            font-weight: 500; */
+        }
+
         #env-area {
             width: 15vw;
             height: 200px;
@@ -199,10 +206,10 @@
                 <!-- </div> -->
                 <textarea id="lama-src-area" class="user-input-area"></textarea>
                 <br />
-                <label style="margin: 10px;">Результат исполнения ниже</label>
+                <h5 style="margin: 10px;">Результат исполнения ниже</h5>
                 <div id="lama-program-output" style="margin: 10px;"></div>
                 <hr />
-                <label style="margin: 10px;">JSON представление программы</label>
+                <h5 style="margin: 10px;">JSON представление программы</h5>
                 <pre id="src-json-area" style="margin: 10px;"></pre>
                 <!-- <label class="mdl-typography--subhead mdl-typography--text-center" style="display: flex;" for="demos">
                     Choose a demo:
@@ -213,9 +220,9 @@
                 <button id="runBcBtn" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect">
                     ИСПОЛНИТЬ БАЙТКОД
                 </button>
-                <label style="margin: 10px;">Сюда положить JSON байткода</label>
+                <h5 style="margin: 10px;">Сюда положить JSON байткода</h5>
                 <textarea id="bc-json-area" class="user-input-area"></textarea>
-                <label style="margin: 10px;">Результат исполнения байткода тут</label>
+                <h5 style="margin: 10px;">Результат исполнения байткода тут</h5>
                 <pre id="bc-program-ouput" />
             </div>
         </div>
