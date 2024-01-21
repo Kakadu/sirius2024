@@ -353,3 +353,12 @@ let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t =
 
 let parse_input _ = `Ok [1;2;3]
 
+let () =
+  let test_input input = 
+    Printf.printf "Input: %S\n%!" input;
+    match Parser.parse_input input with 
+    | `Ok _ -> print_endline "OK"
+    | `Fail s -> print_endline s
+  in 
+  test_input "1";
+  test_input "1 2"
