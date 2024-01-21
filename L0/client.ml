@@ -58,6 +58,8 @@ module Names = struct
 
   let bytecode_src = "bc-json-area"
   let bytecode_output = "bc-program-ouput"
+  let compileLamaBtn = "compileLamaBtn"
+  let runBcBtn = "runBcBtn"
 end
 
 let get_and_coerce name dest = 
@@ -77,7 +79,7 @@ let on_lama_changed =
     el##.textContent := Js.some @@ Js.string (Printf.sprintf "fail: %s" msg)
   in
   
-  let on_input () =
+  let on_input ?(copy=false) () =
     match L0.Parser.parse (Js.to_string area##.value) with 
     | `Fail msg -> 
           report_error ("Can't parse program. " ^ msg); 
@@ -87,7 +89,13 @@ let on_lama_changed =
           let area = get_and_coerce Names.lama_json_area Dom_html.CoerceTo.pre in 
           try 
             let j = LibSerialize.lama_to_json ast in
-            area##.textContent := Js.some @@ Js.string (Yojson.Safe.pretty_to_string j)
+            let json_str = Js.string (Yojson.Safe.pretty_to_string j) in
+            area##.textContent := Js.some json_str;
+            let _ = 
+              (Js.Unsafe.eval_string {|text => navigator.clipboard.writeText(text); |} : Js.js_string Js.t -> unit) 
+              json_str
+            in 
+            ()
           with exc -> 
             report_error (Printexc.to_string exc)
         in
@@ -104,13 +112,31 @@ let on_lama_changed =
         let () = 
           try 
             let rez = L0.Program.eval state ast  in 
-            log "rez = %d\n" rez; 
+            log "rez = %d, copy = %b\n" rez copy; 
             report_success [rez];
           with exc -> report_error (Printexc.to_string exc)
         in
+        let () = 
+          if copy then 
+            ignore @@ Js.Unsafe.eval_string {| 
+            var snackbarContainer = document.querySelector('#demo-snackbar-example');
+            var data = {
+              message: 'JSON в буфере',
+              timeout: 2000,
+              //actionHandler: handler,
+              //actionText: 'Undo'
+            };
+            snackbarContainer.MaterialSnackbar.showSnackbar(data);
+            |}
+          else () 
+        in 
         ())
     in 
-    area##.oninput := Dom.handler (fun _ -> on_input(); Js._true);
+    area##.oninput := Dom.handler (fun _ ->
+      on_input ~copy:true (); 
+      Js._true);
+    (get_and_coerce Names.compileLamaBtn Dom_html.CoerceTo.button)##.onclick := 
+      Dom.handler (fun _ -> on_input ~copy:true (); Js._true);
     on_input
 
 (* Bytecode *)
@@ -150,6 +176,8 @@ let on_bytecode_changed : unit -> unit =
         ())
     in
   area##.oninput := Dom.handler (fun _ -> on_input (); Js._true);
+  (get_and_coerce Names.runBcBtn Dom_html.CoerceTo.button)##.onclick := 
+    Dom.handler (fun _ -> on_input (); Js._true);
   on_input
   
 (* ENV *)
@@ -175,13 +203,16 @@ let () =
 
 let () = 
   let area = get_and_coerce Names.lama_src Dom_html.CoerceTo.textarea in
-  area##.textContent := Js.some @@ Js.string "x+z"
+  area##.textContent := Js.some @@ Js.string "x+z+0"
 
 let () = 
   let area = get_and_coerce Names.bytecode_src Dom_html.CoerceTo.textarea in
   let j = `List [ `String "x"; `String "z"; `Assoc [ ("kind", `String "Binop"); ("value", `String "+")] ] in 
   area##.textContent := Js.some @@ Js.string (Yojson.Safe.pretty_to_string j)
-  
+
+let () = 
+      on_lama_changed ();
+      on_bytecode_changed ()
 (*
 module Eval_bc_gui = struct 
   let clear_output_area () =
