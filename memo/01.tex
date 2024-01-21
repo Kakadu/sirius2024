@@ -78,7 +78,7 @@
 
 \[
 \begin{array}{rcl}
-  \mathcal{I} & = & \cd{CONST}\;n\\
+  \mathscr{I} & = & \cd{CONST}\;n\\
               &   & \cd{LD}\;x\\
               &   & \cd{BINOP}\;\oplus
 \end{array}
@@ -88,7 +88,7 @@
 
 \[
 \begin{array}{rcl}
-  \mathcal{P} & = & \epsilon \\
+  \mathscr{P} & = & \epsilon \\
               &   & i\,p
 \end{array}
 \]
@@ -96,20 +96,34 @@
 Семантика:
 
 \[
-\trans{\inbr{st,\,s}}{\epsilon}{\inbr{st,\,s}}\ruleno{Empty}
+\trans{\inbr{st,\,x:s}}{\epsilon}{x}\ruleno{Empty}
 \]
 \[
-\trule{\trans{\inbr{st,\,(st\,x)s}}{p}{c}}
+\trule{\trans{\inbr{st,\,(st\,x):s}}{p}{c}}
       {\trans{\inbr{st,\,s}}{[\cd{LD}\,x]p}{c}}\ruleno{LD}
 \]
 \[
-\trule{\trans{\inbr{st,\,ns}}{p}{c}}
+\trule{\trans{\inbr{st,\,n:s}}{p}{c}}
       {\trans{\inbr{st,\,s}}{[\cd{CONST}\,n]p}{c}}\ruleno{CONST}
 \]
 \[
-\trule{\trans{\inbr{st,\,(y\otimes x)s}}{p}{c}}
-      {\trans{\inbr{st,\,xys}}{[\cd{BINOP}\oplus]p}{c}}\ruleno{BINOP}
+\trule{\trans{\inbr{st,\,(y\otimes x):s}}{p}{c}}
+      {\trans{\inbr{st,\,x:y:s}}{[\cd{BINOP}\oplus]p}{c}}\ruleno{BINOP}
 \]      
+
+\section{Компилятор}
+
+Всюду определенное отображение
+
+\[
+comp : \mathscr{E}\to \mathscr{P}
+\]
+
+такое, что
+
+\[
+\forall e\in\mathscr E,\,st\,y : \trans{st}{e}{y} \Leftrightarrow \trans{\inbr{st,\,\epsilon}}{comp\,(e)}{y}
+\]
 
 \section{Свойства семантики}
 
@@ -133,7 +147,7 @@
 Множество значений
 
 \[
-\mathvbb{Z}\cup\cd{ERROR}
+\mathbb{Z}\cup\cd{ERROR}
 \]
 
 Семантика бинарных операторов:
