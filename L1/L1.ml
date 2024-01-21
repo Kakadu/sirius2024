@@ -261,7 +261,7 @@ module Parser =
         | Some t -> Program.Seq (h, t)
       };
 
-      input: !(Util.list)[ostap (DECIMAL)]
+      input: DECIMAL*
     )
 
     let parse_input =

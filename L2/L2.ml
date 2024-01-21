@@ -64,13 +64,31 @@ module Program =
     let empty  x        = failwith (Printf.sprintf "undefined variable \"%s\"" x)
     let update st x n y = if y = x then n else st y
 
-    let eval i p =
+    let eval i (fundecls, p) =
+      let lookup =
+        let module M = Map.Make (String) in
+        let m =
+          List.fold_left
+            (fun m (Fun (name, args, body)) ->
+               match M.find_opt name m with
+               | None -> M.add name (args, body) m
+               | _    -> failwith (Printf.sprintf "duplicate function \"%s\" definition" name)
+            )
+            M.empty
+            fundecls
+        in
+        (fun n ->
+           match M.find_opt n m with
+           | Some smth -> smth
+           | None      -> failwith (Printf.sprintf "undefined function \"%s\"" n)
+        )
+      in
       let rec eval ((st, i, o) as c) = function
         | Skip  -> c
         
         | Read x ->
           (match i with
-           | n :: i' -> update st x n, i, o
+           | n :: i' -> update st x n, i', o
            | _       -> failwith "input stream is exhausted"
           )
       
@@ -160,7 +178,7 @@ module SM =
           )
         | READ :: tl ->
           (match i with
-           | n :: i' -> eval (st, n :: s, i, o) tl
+           | n :: i' -> eval (st, n :: s, i', o) tl
            | _       -> failwith "exhausted input stream"
           )
         | WRITE :: tl ->
@@ -243,6 +261,13 @@ module Parser =
       
       expr: expression[primary];
 
+      fundecls: !(Util.list0 fundecl);
+
+      fundecl:
+        "fun" f:LIDENT
+        "(" args:!(Util.list0)[ostap (LIDENT)] ")"
+        "{" body:stmt "}" {Program.Fun (f, args, body)};  
+    
       simple_stmt:
         x:LIDENT ":=" e:expr {Program.Assn (x, e)}
       | "skip"               {Program.Skip}
@@ -256,13 +281,9 @@ module Parser =
         "(" x:LIDENT ")"     {Program.Read (x)}
       | "write"
         "(" e:expr ")"       {Program.Write (e)}
-      | "fun" f:LIDENT
-        "(" args:!(Util.list0)[ostap (LIDENT)] ")"
-        "{" body:stmt "}"    {Program.Fun (f, args, body)}  
       | f:LIDENT
         "(" args:!(Util.list0 expr) ")"
-                             {Program.Call (f, args)}    
-      ;    
+                             {Program.Call (f, args)};    
 
       stmt: h:simple_stmt t:(-";" stmt)? {
         match t with
@@ -305,6 +326,6 @@ module Parser =
             inherit Util.Lexers.lident kws s
           end
           )
-          (ostap (stmt -EOF))
+          (ostap (fundecls stmt -EOF))
  
   end
