@@ -117,7 +117,95 @@
 \item Детерминизм: если $\trans{st}{e}{n}$ и $\trans{st}{e}{m}$ то $n=m$.
 
 \item Строгость: если для произвольного $e^\prime\preceq e$ и произвольного $st$
-$\trans{st}{e^\prime}{\bot}$ то $\trans{st}{e}{\bot}$.
+имеем $\trans{st}{e^\prime}{\bot}$ то $\trans{st}{e}{\bot}$.
 
-  Здесь ``$\preceq$''~--- отношение ``быть подвыражением``.
+  Здесь ``$\preceq$''~--- отношение ``быть подвыражением``:
+
+  \begin{itemize}
+  \item $e\preceq e$
+  \item $e^\prime\preceq e \Rightarrow e^\prime\preceq e\oplus f$
+  \item $e^\prime\preceq e \Rightarrow e^\prime\preceq f\oplus e$
+  \end{itemize}
 \end{enumerate}
+
+\section{Типизация}
+
+Множество значений
+
+\[
+\mathvbb{Z}\cup\cd{ERROR}
+\]
+
+Семантика бинарных операторов:
+
+\[
+x \& y = \left\{
+\begin{array}{rcl}
+  \min\,\{x,\,y\} &, &x,\,y\in\{0,\,1\}\\
+  \cd{ERROR}&,&\mbox{otherwise}
+\end{array}
+\right.
+\]
+
+\[
+x | y = \left\{
+\begin{array}{rcl}
+  \max\,\{x,\,y\} &, &x,\,y\in\{0,\,1\}\\
+  \cd{ERROR}&,&\mbox{otherwise}
+\end{array}
+\right.
+\]
+
+Типы:
+
+\[
+T = \{\primi{int},\,\primi{bool}\}
+\]
+
+Подтипирование:
+
+\[
+\primi{bool}\preceq\primi{int}
+\]
+
+Правила типизации:
+
+\[
+\trule{e : T,\,T\preceq T^\prime}
+      {e : T^\prime}\ruleno{Widening}
+\]
+
+\[
+x : \primi{int}\ruleno{Var}
+\]
+
+\[
+0, 1:\primi{bool}\ruleno{Bool}
+\]
+
+\[
+n:\primi{int}, n\not\in\{0,1\}\ruleno{Int}
+\]
+
+\[
+\trule{e_1 : \primi{int}\quad e_2 : \primi{int}}
+      {e_1\oplus e_1 : \primi{int}},\,\oplus\in\{+,-,*,/,\%\}\ruleno{Arith}
+\]
+
+\[
+\trule{e_1 : \primi{int}\quad e_2 : \primi{int}}
+      {e_1\oplus e_1 : \primi{bool}},\,\oplus\in\{<,\le,>,\ge,=,\ne\}\ruleno{Compare}
+\]
+
+\[
+\trule{e_1 : \primi{bool}\quad e_2 : \primi{bool}}
+      {e_1\oplus e_1 : \primi{bool}},\,\oplus\in\{\&, |\}\ruleno{Logic}
+\]
+      
+Типовая безопасность:
+
+\[
+\forall e,\,t,\,st,\,v\,.\,(e:t)\wedge (\trans{st}{e}{v})\Rightarrow v\ne\cd{ERROR}
+\]
+
+
