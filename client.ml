@@ -36,6 +36,8 @@ let pp_int_list ppf xs =
     ppf xs
 
 let parse_input s = Lang.Parser.parse_input s
+let ( let* ) = Option.bind
+let return = Option.some
 
 (* LAMA *)
 let on_lama_changed =
@@ -48,62 +50,68 @@ let on_lama_changed =
       @@ Js.string ("OK " ^ String.concat " " (List.map string_of_int xs))
   in
   let report_lama_error msg =
-    print_endline "report lama error";
+    (* print_endline "report lama error"; *)
     let el = get_and_coerce Names.lama_output Dom_html.CoerceTo.div in
     el##.style##.color := Js.string "color: red;";
     el##.textContent := Js.some @@ Js.string (Printf.sprintf "fail: %s" msg)
   in
 
   let on_input ?(copy = false) () =
-    match Lang.Parser.parse (Js.to_string area##.value) with
-    | `Fail msg ->
-        report_lama_error ("Can't parse program. " ^ msg);
-        (get_and_coerce Names.lama_json_area Dom_html.CoerceTo.pre)##.textContent
-        := Js.null
-    | `Ok ast ->
-        let () =
-          let area =
-            get_and_coerce Names.lama_json_area Dom_html.CoerceTo.pre
-          in
-          try
-            let j = Lang.ast_to_json ast in
-            let json_str = Js.string (Yojson.Safe.pretty_to_string j) in
-            area##.textContent := Js.some json_str;
-            let _ =
-              (Js.Unsafe.eval_string
-                 {|text => navigator.clipboard.writeText(text); |}
-                : Js.js_string Js.t -> unit)
-                json_str
-            in
-            ()
-          with exc -> report_lama_error (Printexc.to_string exc)
+    let* ast =
+      match Lang.Parser.parse (Js.to_string area##.value) with
+      | `Fail msg ->
+          report_lama_error ("Can't parse program. " ^ msg);
+          (get_and_coerce Names.lama_json_area Dom_html.CoerceTo.pre)##.textContent
+          := Js.null;
+          None
+      | `Ok ast -> Some ast
+    in
+    let* () =
+      let area = get_and_coerce Names.lama_json_area Dom_html.CoerceTo.pre in
+      try
+        let j = Lang.ast_to_json ast in
+        let json_str = Js.string (Yojson.Safe.pretty_to_string j) in
+        area##.textContent := Js.some json_str;
+        let _ =
+          (Js.Unsafe.eval_string
+             {|text => navigator.clipboard.writeText(text); |}
+            : Js.js_string Js.t -> unit)
+            json_str
         in
+        Some ()
+      with exc ->
+        report_lama_error (Printexc.to_string exc);
+        None
+    in
 
-        let env_area = get_and_coerce Names.env Dom_html.CoerceTo.textarea in
-        let state =
-          match parse_input (Js.to_string env_area##.value) with
-          | `Fail msg ->
-              report_lama_error
-                ("Can't parse env. " ^ msg ^ ". Going to use default one");
-              []
-          | `Ok env ->
-              log "Environment: %a" pp_int_list env;
-              report_success [];
-              env
-        in
+    let env_area = get_and_coerce Names.env Dom_html.CoerceTo.textarea in
+    let* state =
+      match parse_input (Js.to_string env_area##.value) with
+      | `Fail msg ->
+          report_lama_error
+            ("Can't parse env. " ^ msg ^ ". Going to use default one");
+          None
+      | `Ok env ->
+          log "Environment: %a" pp_int_list env;
+          report_success [];
+          Some env
+    in
 
-        let () =
-          try
-            let rez = Lang.Program.eval state ast in
-            log "rez = %a, copy = %b\n" pp_int_list rez copy;
-            report_success rez
-          with exc -> report_lama_error (Printexc.to_string exc)
-        in
-        let () =
-          if copy then
-            ignore
-            @@ Js.Unsafe.eval_string
-                 {| 
+    let* () =
+      try
+        let rez = Lang.Program.eval state ast in
+        log "rez = %a, copy = %b\n" pp_int_list rez copy;
+        report_success rez;
+        Some ()
+      with exc ->
+        report_lama_error (Printexc.to_string exc);
+        None
+    in
+    let () =
+      if copy then
+        ignore
+        @@ Js.Unsafe.eval_string
+             {| 
             var snackbarContainer = document.querySelector('#demo-snackbar-example');
             var data = {
               message: 'JSON в буфере',
@@ -113,24 +121,24 @@ let on_lama_changed =
             };
             snackbarContainer.MaterialSnackbar.showSnackbar(data);
             |}
-          else ()
-        in
-        ()
+      else ()
+    in
+    Some ()
   in
   area##.oninput :=
     Dom.handler (fun _ ->
-        on_input ~copy:true ();
+        assert (on_input ~copy:true () <> None);
         Js._true);
   (get_and_coerce Names.compileLamaBtn Dom_html.CoerceTo.button)##.onclick
   := Dom.handler (fun _ ->
-         on_input ~copy:true ();
+         assert (on_input ~copy:true () <> None);
          Js._true);
   on_input
 
 exception Bad_JSON_for_bytecode of string
 
 (* Bytecode *)
-let on_bytecode_changed : unit -> unit =
+let on_bytecode_changed : unit -> unit option =
   let area = get_and_coerce Names.bytecode_src Dom_html.CoerceTo.textarea in
   let report_success xs =
     let el = get_and_coerce Names.bytecode_output Dom_html.CoerceTo.pre in
@@ -143,18 +151,19 @@ let on_bytecode_changed : unit -> unit =
     el##.textContent := Js.some @@ Js.string (Printf.sprintf "fail: %s" msg)
   in
 
-  let on_input () =
-    (* print_endline "on_bytecode_changed"; *)
+  let on_input () : unit option =
     match Yojson.Safe.from_string (Js.to_string area##.value) with
     | exception exc ->
         let msg = Printexc.to_string exc in
         console##error (Js.string msg);
-        report_error ("Ошибка в JSON.\n" ^ msg)
+        report_error ("Ошибка в JSON.\n" ^ msg);
+        return ()
     | json -> (
         let fk s = raise (Bad_JSON_for_bytecode s) in
         match Lang.json_to_bytecode ~fk2:fk ~fk json with
         | exception Bad_JSON_for_bytecode msg ->
-            report_error ("Can't parse bytecode program. " ^ msg)
+            report_error ("Can't parse bytecode program. " ^ msg);
+            return ()
         | bc ->
             let env_area =
               get_and_coerce Names.env Dom_html.CoerceTo.textarea
@@ -162,10 +171,12 @@ let on_bytecode_changed : unit -> unit =
             let state : int list =
               match parse_input (Js.to_string env_area##.value) with
               | `Fail msg ->
+                  log "Can't parse: %s.\n%s %d" msg __FILE__ __LINE__;
                   report_error
                     ("Can't parse env. " ^ msg ^ ". Goging to use default one");
                   []
               | `Ok env ->
+                  log "Input list: %a" pp_int_list env;
                   report_success [];
                   env
             in
@@ -177,15 +188,15 @@ let on_bytecode_changed : unit -> unit =
                 report_success rez
               with exc -> report_error (Printexc.to_string exc)
             in
-            ())
+            return ())
   in
   area##.oninput :=
     Dom.handler (fun _ ->
-        on_input ();
+        let _ : unit option = on_input () in
         Js._true);
   (get_and_coerce Names.runBcBtn Dom_html.CoerceTo.button)##.onclick
   := Dom.handler (fun _ ->
-         on_input ();
+         let _ : unit option = on_input () in
          Js._true);
   on_input
 
@@ -195,17 +206,20 @@ let () =
   let status = get_and_coerce Names.env_status Dom_html.CoerceTo.div in
   area##.oninput :=
     Dom.handler (fun _ ->
-        (match Lang.parse_input (Js.to_string area##.value) with
-        | `Fail msg ->
-            status##.style##.color := Js.string "color: red;";
-            status##.textContent :=
-              Js.some (Js.string ("Can't parse env. " ^ msg))
-        | `Ok _env ->
-            status##.style##.color := Js.string "color: black;";
-            status##.textContent := Js.null;
-            on_lama_changed ();
-            on_bytecode_changed ();
-            ());
+        let _ : unit option =
+          match Lang.parse_input (Js.to_string area##.value) with
+          | `Fail msg ->
+              status##.style##.color := Js.string "color: red;";
+              status##.textContent :=
+                Js.some (Js.string ("Can't parse env. " ^ msg));
+              Some ()
+          | `Ok _env ->
+              status##.style##.color := Js.string "color: black;";
+              status##.textContent := Js.null;
+              let* () = on_lama_changed () in
+              let* () = on_bytecode_changed () in
+              Some ()
+        in
         Js._true);
   ()
 
@@ -263,7 +277,8 @@ let () =
   area##.textContent := Js.some @@ Js.string (Yojson.Safe.pretty_to_string j)
 
 let () =
-  on_lama_changed ();
-  on_bytecode_changed ()
+  let _ : unit option = on_lama_changed () in
+  let _ : unit option = on_bytecode_changed () in
+  ()
 
 let () = console##log Dom_html.window##.location##.hash
