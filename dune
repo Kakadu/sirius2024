@@ -1,0 +1,26 @@
+(executable
+ (name client)
+ (modules client)
+ (libraries
+  L1
+  yojson
+  ;
+  )
+ (flags
+  (:standard -rectypes))
+ (modes js)
+ (preprocess
+  (pps js_of_ocaml-ppx)))
+
+(rule
+ (targets pp5+gt+plugins+ostap+dump.byte)
+ (deps
+  (package GT)
+  (package ostap))
+ (action
+  (run
+   mkcamlp5
+   -package
+   camlp5,camlp5.pa_o,camlp5.pr_o,ostap.syntax,GT.syntax.all,GT.syntax
+   -o
+   %{targets})))
