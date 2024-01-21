@@ -249,7 +249,11 @@ module Parser =
         "else" e:stmt
         "fi"                 {Program.If (c, t, e)}
       | "while" c:expr
-        "do" s:stmt "od"     {Program.While (c, s)};
+        "do" s:stmt "od"     {Program.While (c, s)}
+      | "read"
+        "(" x:LIDENT ")"     {Program.Read (x)}
+      | "write"
+        "(" e:expr ")"       {Program.Write (e)};
 
       stmt: h:simple_stmt t:(-";" stmt)? {
         match t with
@@ -278,7 +282,7 @@ module Parser =
           (ostap (input -EOF))
 
     let parse =
-      let kws = ["skip"; "if"; "fi"; "then"; "else"; "do"; "od"; "while"] in
+      let kws = ["skip"; "if"; "fi"; "then"; "else"; "do"; "od"; "while"; "read"; "write"] in
       fun s ->
         parse
           (object (self : 'self)
