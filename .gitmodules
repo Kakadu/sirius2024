@@ -1,0 +1,4 @@
+[submodule "ostap"]
+	path = ostap
+	url = https://github.com/PLTools/ostap.git
+	branch = old+dune

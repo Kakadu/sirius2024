@@ -123,6 +123,7 @@ module SM =
       in
       List.rev @@ compile [] p
 
+    
     let eval i p =
       let lookup =
         let module M = Map.Make (String) in
@@ -198,7 +199,6 @@ module Parser =
 
     open Ostap
     open Ostap.Util
-    open Matcher
 
     let expression primary =
       let binop op x y = Program.Expr.Binop (op, x, y) in
@@ -268,7 +268,7 @@ module Parser =
       let kws = [] in
       fun s ->
         parse
-          (object (self : 'self)
+          (object
             inherit Matcher.t s
             inherit Util.Lexers.decimal s
             inherit Util.Lexers.skip [
@@ -285,7 +285,7 @@ module Parser =
       let kws = ["skip"; "if"; "fi"; "then"; "else"; "do"; "od"; "while"; "read"; "write"] in
       fun s ->
         parse
-          (object (self : 'self)
+          (object
             inherit Matcher.t s
             inherit Util.Lexers.decimal s
             inherit Util.Lexers.skip [
@@ -299,3 +299,57 @@ module Parser =
           (ostap (stmt -EOF))
  
   end
+
+let ast_to_json =
+  let rec helper_e = function 
+  | Program.Expr.Var s -> `Assoc [("kind", `String "Var"); "name", `String s]
+  | Const n ->  `Assoc [("kind", `String "Const"); "value", `Int n]
+  | Binop (op, l, r) -> 
+      `Assoc  [ ("kind", `String "op"); ("name", `String op)
+              ; ("left", helper_e l); ("right", helper_e r)
+              ]
+  in 
+  let rec helper = function 
+  | Program.Skip -> `String "Skip"
+  | Read s -> `Assoc [("kind", `String "Read"); "name", `String s]
+  | Write e  -> `Assoc [("kind", `String "Write"); "value", helper_e e]
+  | Assn (l,r)  -> `Assoc [("kind", `String "Assn"); "lvalue", `String l; "rvalue", helper_e r]
+  | If (cond,th,el)  -> 
+    `Assoc  [ ("kind", `String "if"); "cond", helper_e cond
+            ; "then", helper th; "else", helper el ]
+  | While (cond,body)  -> 
+      `Assoc  [ ("kind", `String "While"); "cond", helper_e cond
+              ; "body", helper body ]
+  | Seq (l,r)  -> 
+    `Assoc  [ ("kind", `String "Seq")
+            ; "left", helper l; "right", helper r ]
+  in
+  helper
+
+
+let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t = 
+  let rec helper = function 
+  | `Int n
+  | `Assoc [ ("kind", `String "Const"); ("value", `Int n)] -> SM.CONST n
+  | `Assoc [ ("kind", `String "Binop"); ("value", `String s)] -> SM.BINOP s
+  | `Assoc [ ("kind", `String "ST"); ("value", `String s)] -> SM.ST s
+  | `String "READ"
+  | `Assoc [ ("kind", `String "READ") ] -> SM.READ
+  | `String "WRITE"
+  | `Assoc [ ("kind", `String "WRITE") ] -> SM.WRITE
+  | `String s
+  | `Assoc [ ("kind", `String "LD"); ("value", `String s)]
+  | `Assoc [ ("kind", `String "Load"); ("value", `String s)] -> SM.LD s
+  | `Assoc [ ("kind", `String "JMP"); ("value", `String s)] -> SM.JMP s
+  | `Assoc [ ("kind", `String "JZ"); ("value", `String s)] -> SM.JZ s
+  | `Assoc [ ("kind", `String "JNZ"); ("value", `String s)] -> SM.JNZ s
+  | `Assoc [ ("kind", `String "LABEL"); ("value", `String s)] -> SM.LABEL s
+  | _ -> fk "неразобранный случай"
+  in
+  function 
+  | `List xs -> List.map helper xs
+  | _ -> fk2 "ожидался список"
+
+
+let parse_input _ = `Ok [1;2;3]
+
