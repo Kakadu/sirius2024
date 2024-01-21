@@ -60,10 +60,25 @@ module Program =
     | Call   of string * Expr.t list
     | Fun    of string * string list * t
     with show
-    
-    let empty  x        = failwith (Printf.sprintf "undefined variable \"%s\"" x)
-    let update st x n y = if y = x then n else st y
 
+    exception Undefined of string
+          
+    let empty  x        = raise (Undefined x)
+    let update st x n y = if y = x then n else st y
+    let undefine st x y = if y = x then raise (Undefined x) else st y
+    let defined state x =
+      try ignore (state x); true with Undefined _ -> false 
+
+    let restore st fargs st' =
+      List.fold_left
+        (fun st' name ->
+           if defined st name
+           then update st' name (st name)
+           else undefine st' name
+        )
+        st'
+        fargs
+     
     let eval i (fundecls, p) =
       let lookup =
         let module M = Map.Make (String) in
@@ -84,33 +99,47 @@ module Program =
         )
       in
       let rec eval ((st, i, o) as c) = function
-        | Skip  -> c
+      | Skip  -> c
         
-        | Read x ->
-          (match i with
-           | n :: i' -> update st x n, i', o
-           | _       -> failwith "input stream is exhausted"
-          )
+      | Read x ->
+        (match i with
+         | n :: i' -> update st x n, i', o
+         | _       -> failwith "input stream is exhausted"
+        )
       
-        | Write e ->
-          st, i, Expr.eval st e :: o
+      | Write e ->
+        st, i, Expr.eval st e :: o
              
-        | Assn (x, e) ->
-          update st x (Expr.eval st e), i, o
-          
-        | If (f, t, e) ->
-          eval c @@
-          if Algebra.if_bool (Expr.eval st f)
-          then t
-          else e
+      | Assn (x, e) ->
+        update st x (Expr.eval st e), i, o
+        
+      | If (f, t, e) ->
+        eval c @@
+        if Algebra.if_bool (Expr.eval st f)
+        then t
+        else e
             
-        | While (f, s) as w ->
-          if Algebra.if_bool (Expr.eval st f)
-          then eval (eval c s) w
-          else c
+      | While (f, s) as w ->
+        if Algebra.if_bool (Expr.eval st f)
+        then eval (eval c s) w
+        else c
             
-        | Seq (s1, s2)  ->
-          eval (eval c s1) s2
+      | Seq (s1, s2)  ->
+        eval (eval c s1) s2
+            
+      | Call (f, aargs) ->
+        let fargs, body = lookup f in
+        if List.length aargs <> List.length fargs
+        then failwith (Printf.sprintf "wrong number of function \"%s\" arguments (%d given, %d expected)"
+                         f
+                         (List.length aargs)
+                         (List.length fargs))
+        else
+          let restore = restore st fargs in
+          let vals    = List.map (Expr.eval st) aargs in
+          let st'     = List.fold_left (fun st (name, v) -> update st name v) st @@ List.combine fargs vals in 
+          let st', i, o = eval (st', i, o) body in
+          (restore st', i, o)          
       in
       let _, _, o = eval (empty, i, []) p in
       List.rev o
@@ -131,6 +160,9 @@ module SM =
     | JZ    of string
     | JNZ   of string
     | LABEL of string
+    | BEGIN of string list
+    | END
+    | CALL  of string
     with show
 
     @type t = insn list with show
@@ -161,37 +193,37 @@ module SM =
           | None   -> failwith (Printf.sprintf "undefined label %s" l)
           | Some p -> p
       in
-      let rec eval ((st, s, i, o) as c) = function
+      let rec eval ((st, s, cs, i, o) as c) = function
         | [] -> c
-        | LD    x  :: tl -> eval (st, st x :: s, i, o) tl
-        | CONST n  :: tl -> eval (st, n    :: s, i, o) tl
+        | LD    x  :: tl -> eval (st, st x :: s, cs, i, o) tl
+        | CONST n  :: tl -> eval (st, n    :: s, cs, i, o) tl
         | BINOP op :: tl ->
           (match s with
-           | x :: y :: s' -> eval (st, Algebra.evalOp op y x :: s', i, o) tl
+           | x :: y :: s' -> eval (st, Algebra.evalOp op y x :: s', cs, i, o) tl
            | _            ->
              failwith (Printf.sprintf "exhausted stack at BINOP %s: \"%s\"" op ((show(list) (show(int))) s))
           )
         | ST x :: tl ->
           (match s with
-           | n :: s' -> eval (Program.update st x n, s', i, o) tl
+           | n :: s' -> eval (Program.update st x n, s', cs, i, o) tl
            | _       -> failwith (Printf.sprintf "exhausted stack at ST %s" x)
           )
         | READ :: tl ->
           (match i with
-           | n :: i' -> eval (st, n :: s, i', o) tl
+           | n :: i' -> eval (st, n :: s, cs, i', o) tl
            | _       -> failwith "exhausted input stream"
           )
         | WRITE :: tl ->
           (match s with
-           | n :: s' -> eval (st, s', i, n :: o) tl
+           | n :: s' -> eval (st, s', cs, i, n :: o) tl
            | _       -> failwith "exhausted stack at WRITE"
           )
         | JMP l :: _ ->
-          eval c (lookup l)
+          eval c (lookup l)            
         | JZ l :: tl ->
           (match s with
            | n :: s' ->
-             eval (st, s', i, o) @@
+             eval (st, s', cs, i, o) @@
              if Algebra.if_bool n
              then tl
              else lookup l
@@ -200,15 +232,36 @@ module SM =
         | JNZ l :: tl ->
           (match s with
            | n :: s' ->
-             eval (st, s', i, o) @@
+             eval (st, s', cs, i, o) @@
              if Algebra.if_bool n
              then lookup l
              else tl
            | _ -> failwith (Printf.sprintf "exhausted stack at JZ %s" l)
           )          
         | LABEL _ :: tl -> eval c tl
+        | CALL f :: tl ->
+          eval (st, s, ((fun _ -> st), tl) :: cs, i, o) (lookup f)
+        | BEGIN fargs :: tl ->
+          let (_, ret) :: cs = cs in
+          let st', s' =
+            List.fold_left
+              (fun (st', s') arg ->
+                 match s' with
+                 | a :: s'' -> Program.update st' arg a, s''
+                 | _        -> failwith "exhausted stack at \"BEGIN %s\"" @@ (show(list) (show(string))) fargs                
+              )
+              (st, s)
+              fargs
+          in
+          eval (st', s', (Program.restore st fargs, ret) :: cs, i, o) tl
+        | END :: _ ->
+          (match cs with
+           | [] -> c
+           | (restore, p) :: cs' ->
+             eval (restore st, s, cs', i, o) p
+          )
       in
-      let _, _, _, o = eval (Program.empty, [], i, []) p in
+      let _, _, _, _, o = eval (Program.empty, [], [], i, []) p in
       List.rev o
       
   end
