@@ -72,17 +72,20 @@ let on_lama_changed =
   let area = get_and_coerce Names.lama_src Dom_html.CoerceTo.textarea in
   let report_success xs = 
     let el = get_and_coerce Names.lama_output Dom_html.CoerceTo.div in
+    el##.style##.color := (Js.string "color: black;"); 
     el##.textContent := Js.some @@ Js.string ("OK " ^ String.concat " " (List.map string_of_int xs))
   in
-  let report_error msg = 
+  let report_lama_error msg = 
+    print_endline "report lama error";
     let el = get_and_coerce Names.lama_output Dom_html.CoerceTo.div in
+    el##.style##.color := (Js.string "color: red;"); 
     el##.textContent := Js.some @@ Js.string (Printf.sprintf "fail: %s" msg)
   in
   
   let on_input ?(copy=false) () =
     match L0.Parser.parse (Js.to_string area##.value) with 
     | `Fail msg -> 
-          report_error ("Can't parse program. " ^ msg); 
+          report_lama_error ("Can't parse program. " ^ msg); 
           (get_and_coerce Names.lama_json_area Dom_html.CoerceTo.pre)##.textContent := Js.null
     | `Ok ast -> (
         let () = 
@@ -97,13 +100,13 @@ let on_lama_changed =
             in 
             ()
           with exc -> 
-            report_error (Printexc.to_string exc)
+            report_lama_error (Printexc.to_string exc)
         in
 
         let env_area = get_and_coerce Names.env Dom_html.CoerceTo.textarea in 
         let state = match L0.Parser.parse_state (Js.to_string env_area##.value) with 
         | `Fail msg -> 
-            report_error ("Can't parse env. " ^ msg ^ ". Goging to use default one"); 
+            report_lama_error ("Can't parse env. " ^ msg ^ ". Going to use default one"); 
             (function _ -> 42)
         | `Ok env ->
             report_success []; env
@@ -114,7 +117,7 @@ let on_lama_changed =
             let rez = L0.Program.eval state ast  in 
             log "rez = %d, copy = %b\n" rez copy; 
             report_success [rez];
-          with exc -> report_error (Printexc.to_string exc)
+          with exc -> report_lama_error (Printexc.to_string exc)
         in
         let () = 
           if copy then 
@@ -187,9 +190,11 @@ let () =
   area##.oninput := Dom.handler (fun _ ->
     (match L0.Parser.parse_state (Js.to_string area##.value) with 
     | `Fail msg -> 
+        status##.style##.color := (Js.string "color: red;"); 
         status##.textContent := Js.some (Js.string ("Can't parse env. " ^ msg))
     | `Ok env ->
-        status##.textContent := Js.some (Js.string "OK");
+        status##.style##.color := (Js.string "color: black;"); 
+        status##.textContent := Js.null;
         on_lama_changed();
         on_bytecode_changed();
         ()
