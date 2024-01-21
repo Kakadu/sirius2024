@@ -57,6 +57,8 @@ module Program =
     | If     of Expr.t * t * t
     | While  of Expr.t * t
     | Seq    of t * t
+    | Call   of string * Expr.t list
+    | Fun    of string * string list * t
     with show
     
     let empty  x        = failwith (Printf.sprintf "undefined variable \"%s\"" x)
@@ -68,7 +70,7 @@ module Program =
         
         | Read x ->
           (match i with
-           | n :: i' -> update st x n, i', o
+           | n :: i' -> update st x n, i, o
            | _       -> failwith "input stream is exhausted"
           )
       
@@ -158,7 +160,7 @@ module SM =
           )
         | READ :: tl ->
           (match i with
-           | n :: i' -> eval (st, n :: s, i', o) tl
+           | n :: i' -> eval (st, n :: s, i, o) tl
            | _       -> failwith "exhausted input stream"
           )
         | WRITE :: tl ->
@@ -253,7 +255,14 @@ module Parser =
       | "read"
         "(" x:LIDENT ")"     {Program.Read (x)}
       | "write"
-        "(" e:expr ")"       {Program.Write (e)};
+        "(" e:expr ")"       {Program.Write (e)}
+      | "fun" f:LIDENT
+        "(" args:!(Util.list0)[ostap (LIDENT)] ")"
+        "{" body:stmt "}"    {Program.Fun (f, args, body)}  
+      | f:LIDENT
+        "(" args:!(Util.list0 expr) ")"
+                             {Program.Call (f, args)}    
+      ;    
 
       stmt: h:simple_stmt t:(-";" stmt)? {
         match t with
@@ -282,7 +291,7 @@ module Parser =
           (ostap (input -EOF))
 
     let parse =
-      let kws = ["skip"; "if"; "fi"; "then"; "else"; "do"; "od"; "while"; "read"; "write"] in
+      let kws = ["skip"; "if"; "fi"; "then"; "else"; "do"; "od"; "while"; "read"; "write"; "fun"; "return"] in
       fun s ->
         parse
           (object (self : 'self)

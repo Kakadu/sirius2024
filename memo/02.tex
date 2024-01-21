@@ -86,7 +86,19 @@ st[x\gets n]=y\mapsto\left\{
 \Gamma : \mathscr{L}\to\mathscr{P}
 \]
 
-Семантика новых инструкций (для старых все остается как было, только надо в правилах везде слева дописать ``$\Gamma\vdash$'' и добавить в конфигурацию входной и выходной потоки):
+В конфигурацию слева добавляем входной и выходной потоки:
+
+\[
+\inbr{st,\,s}\to\inbr{st,\,s,\,i,\,o}
+\]
+
+Новая аксиома для ``$\epsilon$'':
+
+\[
+\withenv{\Gamma}{\trans{\inbr{st,\,s,\,i,\,o}}{\epsilon}{o}}\ruleno{Empty}
+\]
+
+Семантика новых инструкций (для остальных старых все остается как было, только надо в правилах везде слева дописать ``$\Gamma\vdash$'' и добавить в конфигурацию входной и выходной потоки):
 
 \[
 \trule{\withenv{\Gamma}{\trans{\inbr{st,\,n:s,\,i,\,o}}{p}{c}}}
@@ -111,4 +123,16 @@ st[x\gets n]=y\mapsto\left\{
 \[
 \trule{\withenv{\Gamma}{\trans{\inbr{st,\,s,\,i,\,o}}{p}{c}}}
       {\withenv{\Gamma}{\trans{\inbr{st,\,1:s,\,i,\,o}}{[\cd{JZ}\,l]p}{c}}}\ruleno{JZ-False}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{st,\,s,\,i,\,o}}{\Gamma\,l}{c}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,1:s,\,i,\,o}}{[\cd{JNZ}\,l]p}{c}}}\ruleno{JNZ-True}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{st,\,s,\,i,\,o}}{p}{c}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,0:s,\,i,\,o}}{[\cd{JNZ}\,l]p}{c}}}\ruleno{JNZ-False}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{c}{p}{c^\prime}}}
+      {\withenv{\Gamma}{\trans{c}{[\cd{LABEL}\,l]p}{c^\prime}}}\ruleno{Label}
 \]
