@@ -1,0 +1,114 @@
+\section{Поток управления}
+
+Операторы:
+
+\[
+\begin{array}{rcl}
+  \mathscr{S}& = &\primi{skip}\\
+             &   &x\, \primi{:=}\, e\\
+             &   &s_1\,\primi{;}\, s_2\\
+             &   &\primi{if}\; e\, s_1\, s_2\\
+             &   &\primi{while}\; e\, s\\
+             &   &\primi{read}\,x\\
+             &   &\primi{write}\,e
+\end{array}
+\]
+
+Семантика:
+
+\[
+\trans{c}{\primi{skip}}{c}\ruleno{Skip}
+\]
+\[
+\trule{\trans{st}{e}{n}}
+      {\trans{\inbr{st,\,i,\,o}}{x\,\primi{:=}\,e}{\inbr{st[x\gets n],\,i,\,o}}}\ruleno{Assn}
+\]
+\[
+\trule{\trans{c}{s_1}{c^\prime}\quad\trans{c^\prime}{s_2}{c^{\prime\prime}}}
+      {\trans{c}{s_1\,\primi{;}\,s_2}{c^{\prime\prime}}}\ruleno{Seq}
+\]
+\[
+\trule{\trans{st}{e}{1}\quad\trans{\inbr{st,\,i,\,o}}{s_1}{c}}
+      {\trans{\inbr{st,\,i,\,o}}{\primi{if}\;e\,s_1\,s_2}{c}}\ruleno{If-True}
+\]
+\[
+\trule{\trans{st}{e}{0}\quad\trans{\inbr{st,\,i,\,o}}{s_2}{c}}
+      {\trans{\inbr{st,\,i,\,o}}{\primi{if}\;e\,s_1\,s_2}{c}}\ruleno{If-False}
+\]
+\[
+\trule{\trans{st}{e}{1}\quad\trans{\inbr{st,\,i,\,o}}{s}{c}\quad\trans{c}{\primi{while}\,e\,s}{c^\prime}}
+     {\trans{\inbr{st,\,i,\,o}}{\primi{while}\;e\,s}{c^\prime}}\ruleno{While-True}
+\]
+\[     
+\trule{\trans{st}{e}{0}}
+      {\trans{\inbr{st,\,i,\,o}}{\primi{while}\;e\,s}{\inbr{st,\,i,\,o}}}\ruleno{While-False}
+\]
+\[
+\trans{\inbr{st,\,n:i,\,o}}{\primi{read}\,x}{\inbr{st[x\gets n],\,i,\,o}}\ruleno{Read}
+\]
+\[
+\trule{\trans{st}{e}{n}}
+      {\trans{\inbr{st,\,i,\,o}}{\primi{write}\;e}{\inbr{st,\,i,\,o@n}}}\ruleno{Write}
+\]
+
+где
+
+\[
+st[x\gets n]=y\mapsto\left\{
+\begin{array}{rcl}
+  n & , & x = y \\
+  st\,y & , & \mbox{иначе}
+\end{array}
+\right.
+\]
+
+\section{Поток управления в абстрактной машине}
+
+Новые инструкции:
+
+\[
+\begin{array}{rcl}
+  \mathscr{I} & += & \cd{READ} \\
+              &    & \cd{WRITE} \\
+              &    & \cd{ST}\,x\\
+              &    & \cd{JMP}\,l\\
+              &    & \cd{JZ}\,l\\
+              &    & \cd{JNZ}\,l\\
+              &    & \cd{LABEL}\,l
+\end{array}
+\]
+
+где $l\in\mathscr{L}$~--- метка.
+
+Окружение:
+
+\[
+\Gamma : \mathscr{L}\to\mathscr{P}
+\]
+
+Семантика новых инструкций (для старых все остается как было, только надо в правилах везде слева дописать ``$\Gamma\vdash$'' и добавить в конфигурацию входной и выходной потоки):
+
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{st,\,n:s,\,i,\,o}}{p}{c}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,s,\,n:i,\,o}}{[\cd{READ}]p}{c}}}\ruleno{Read}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{st,\,s,\,i,\,o@n}}{p}{c}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,n:s,\,i,\,o}}{[\cd{WRITE}]p}{c}}}\ruleno{Write}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{st[x\gets n],\,s,\,i,\,o}}{p}{c}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,n:s,\,i,\,o}}{[\cd{ST}\,x]p}{c}}}\ruleno{ST}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{c}{\Gamma\,l}{c^\prime}}}
+      {\withenv{\Gamma}{\trans{c}{[\cd{JMP}\,l]p}{c^\prime}}}\ruleno{JMP}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{st,\,s,\,i,\,o}}{\Gamma\,l}{c}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,0:s,\,i,\,o}}{[\cd{JZ}\,l]p}{c}}}\ruleno{JZ-True}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{st,\,s,\,i,\,o}}{p}{c}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,1:s,\,i,\,o}}{[\cd{JZ}\,l]p}{c}}}\ruleno{JZ-False}
+\]
