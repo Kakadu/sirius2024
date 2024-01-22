@@ -385,7 +385,7 @@ module Parser =
  
   end
 
-let ast_to_json : module_ -> Yojson.Safe.t = fun _ -> assert false
+let ast_to_json : module_ -> Yojson.Safe.t = fun _ -> failwith "To json not implemented"
 let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t = fun _ -> assert false
 
 let __ () = 
