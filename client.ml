@@ -53,7 +53,7 @@ let get_and_coerce name dest =
   | None -> failwiths "Can get element %S" name
   | Some x -> x
 
-let lang_desc, m, default_bytecode, default_lama =
+let lang_desc, m, default_bytecode, default_lama, default_env =
   let module Default = struct
     let bcL1 =
       `List
@@ -97,23 +97,70 @@ od;
 write(fac)
     |}
 
-    let bcL2 = ""
+    let envL1 = "3 2 1"
+
+    let bcL2 =
+      `List
+        [
+          (* main *)
+          `String "READ";
+          `Assoc [ ("kind", `String "CALL"); ("value", `String "fact") ];
+          `String "END";
+          (* function helper *)
+          `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper") ];
+          `Assoc
+            [
+              ("kind", `String "BEGIN");
+              ("value", `List [ `String "n"; `String "acc" ]);
+            ];
+          (* n == 1 *)
+          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+          `Int 1;
+          `Assoc [ ("kind", `String "Binop"); ("value", `String "==") ];
+          `Assoc [ ("kind", `String "JZ"); ("value", `String "helper_else") ];
+          `Assoc [ ("kind", `String "Load"); ("value", `String "acc") ];
+          `String "WRITE";
+          `Assoc [ ("kind", `String "JMP"); ("value", `String "helper_fin") ];
+          `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper_else") ];
+          (* acc*n *)
+          `Assoc [ ("kind", `String "Load"); ("value", `String "acc") ];
+          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+          `Assoc [ ("kind", `String "Binop"); ("value", `String "*") ];
+          (* n-1 *)
+          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+          `Int 1;
+          `Assoc [ ("kind", `String "Binop"); ("value", `String "-") ];
+          `Assoc [ ("kind", `String "CALL"); ("value", `String "helper") ];
+          `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper_fin") ];
+          `String "END";
+          (* function fact *)
+          `Assoc [ ("kind", `String "LABEL"); ("value", `String "fact") ];
+          `Assoc [ ("kind", `String "BEGIN"); ("value", `List [ `String "n" ]) ];
+          `Int 1;
+          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+          `Assoc [ ("kind", `String "CALL"); ("value", `String "helper") ];
+          `String "END";
+        ]
+      |> Yojson.Safe.pretty_to_string
 
     let lamaL2 =
       {|
-  fun fact (n) {
-    if n <= 1 then f := 1 else fact (n-1); f := f * n fi
-  }
-   
-  fact (5);
-  write (f)|}
+    fun helper (n, acc) {
+        if n <= 1 then write (acc) else helper (n-1, acc*n)  fi
+    },
+    fun fact (n) { helper (n, 1) }
+    
+    read(n);
+    fact(n)|}
+
+    let envL2 = "3 2 1"
   end in
   let known =
     let ls =
       let open Default in
       [
-        ("#L1", ("Язык номер 1", (module L1 : LANG), bcL1, lamaL1));
-        ("#L2", ("Язык номер 2", (module L2 : LANG), bcL2, lamaL2));
+        ("#L1", ("Язык номер 1", (module L1 : LANG), bcL1, lamaL1, envL1));
+        ("#L2", ("Язык номер 2", (module L2 : LANG), bcL2, lamaL2, envL2));
       ]
     in
     let data = List.assoc "#L1" ls in
@@ -130,7 +177,7 @@ write(fac)
               lang_queried
               (String.concat ", " (List.map fst known))));
       assert false
-  | desc, data, a, b -> (desc, data, a, b)
+  | desc, data, a, b, c -> (desc, data, a, b, c)
 
 module Lang : LANG = (val m)
 
@@ -333,7 +380,7 @@ let () =
 
 let () =
   let area = get_and_coerce Names.env Dom_html.CoerceTo.textarea in
-  area##.textContent := Js.some @@ Js.string {|3 2 1|}
+  area##.textContent := Js.some @@ Js.string default_env
 
 let () =
   let area = get_and_coerce Names.lama_src Dom_html.CoerceTo.textarea in
@@ -341,7 +388,6 @@ let () =
 
 let () =
   let area = get_and_coerce Names.bytecode_src Dom_html.CoerceTo.textarea in
-
   area##.textContent := Js.some @@ Js.string default_bytecode
 
 let () =

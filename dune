@@ -22,6 +22,6 @@
   (run
    mkcamlp5
    -package
-   camlp5,camlp5.pa_o,camlp5.pr_o,ostap.syntax,GT.syntax.all,GT.syntax
+   camlp5,camlp5.pa_o,camlp5.pr_o,ostap.syntax,GT.syntax.all,GT.syntax,camlp5.pr_dump
    -o
    %{targets})))
