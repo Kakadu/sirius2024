@@ -273,7 +273,6 @@ module Parser =
 
     open Ostap
     open Ostap.Util
-    open Matcher
 
     let expression primary =
       let binop op x y = Program.Expr.Binop (op, x, y) in
@@ -353,10 +352,10 @@ module Parser =
       let kws = [] in
       fun s ->
         parse
-          (object (self : 'self)
+          (object
             inherit Matcher.t s
             inherit Util.Lexers.decimal s
-            inherit Util.Lexers.skip [
+            inherit! Util.Lexers.skip [
                 Matcher.Skip.whitespaces " \t\n\r";
                 Matcher.Skip.lineComment "--";
                 Matcher.Skip.nestedComment "(*" "*)"
@@ -370,10 +369,10 @@ module Parser =
       let kws = ["skip"; "if"; "fi"; "then"; "else"; "do"; "od"; "while"; "read"; "write"; "fun"; "return"] in
       fun s ->
         parse
-          (object (self : 'self)
+          (object
             inherit Matcher.t s
             inherit Util.Lexers.decimal s
-            inherit Util.Lexers.skip [
+            inherit! Util.Lexers.skip [
                 Matcher.Skip.whitespaces " \t\n\r";
                 Matcher.Skip.lineComment "--";
                 Matcher.Skip.nestedComment "(*" "*)"
@@ -385,9 +384,83 @@ module Parser =
  
   end
 
-let ast_to_json : module_ -> Yojson.Safe.t = fun _ -> failwith "To json not implemented"
-let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t = fun _ -> assert false
+let ast_to_json : module_ -> Yojson.Safe.t = 
+  let rec helper_e = function 
+  | Program.Expr.Var s -> `Assoc [("kind", `String "Var"); "name", `String s]
+  | Const n ->  `Assoc [("kind", `String "Const"); "value", `Int n]
+  | Binop (op, l, r) -> 
+      `Assoc  [ ("kind", `String "op"); ("name", `String op)
+              ; ("left", helper_e l); ("right", helper_e r)
+              ]
+  in 
+  let rec helper = function 
+  | Program.Skip -> `String "Skip"
+  | Read s -> `Assoc [("kind", `String "Read"); "name", `String s]
+  | Write e  -> `Assoc [("kind", `String "Write"); "value", helper_e e]
+  | Assn (l,r)  -> `Assoc [("kind", `String "Assn"); "lvalue", `String l; "rvalue", helper_e r]
+  | If (cond,th,el)  -> 
+    `Assoc  [ ("kind", `String "if"); "cond", helper_e cond
+            ; "then", helper th; "else", helper el ]
+  | While (cond,body)  -> 
+      `Assoc  [ ("kind", `String "While"); "cond", helper_e cond
+              ; "body", helper body ]
+  | Seq (l,r)  -> 
+    `Assoc  [ ("kind", `String "Seq")
+            ; "left", helper l; "right", helper r ]
+  | Call (name, args) -> 
+    `Assoc  [ ("kind", `String "Call"); "func", `String name
+            ; "args", `List (List.map helper_e args) ]
+  | Fun (name, params, body) ->
+    `Assoc  [ ("kind", `String "Fun"); ("name", `String name)
+            ; "params", `List (List.map (fun x -> `String x) params)
+            ; ("body", helper body)
+            ]
+  in
+  fun (funs, prog) -> 
+    `Assoc [ 
+      ("funs", `List (List.map helper funs)); 
+      ("prog", helper prog)
+    ]
+  
 
+
+let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t = 
+  let helper = function 
+  | `Int n
+  | `Assoc [ ("kind", `String "Const"); ("value", `Int n)]
+  | `Assoc [ ("kind", `String "CONST"); ("value", `Int n)] -> SM.CONST n
+  | `Assoc [ ("kind", `String "Binop"); ("value", `String s)]
+  | `Assoc [ ("kind", `String "BINOP"); ("value", `String s)] -> SM.BINOP s
+  | `Assoc [ ("kind", `String "ST"); ("value", `String s)] -> SM.ST s
+  | `String "READ"
+  | `Assoc [ ("kind", `String "READ") ] -> SM.READ
+  | `String "WRITE"
+  | `Assoc [ ("kind", `String "WRITE") ] -> SM.WRITE
+  | `Assoc [ ("kind", `String "JMP"); ("value", `String s)] -> SM.JMP s
+  | `Assoc [ ("kind", `String "JZ"); ("value", `String s)] -> SM.JZ s
+  | `Assoc [ ("kind", `String "JNZ"); ("value", `String s)] -> SM.JNZ s
+  | `Assoc [ ("kind", `String "LABEL"); ("value", `String s)] -> SM.LABEL s
+  (* | `String "BEGIN"
+  | `Assoc [ ("kind", `String "BEGIN") ] -> SM.BEGIN *)
+  | `String "END"
+  | `Assoc [ ("kind", `String "END") ] -> SM.END
+  | `Assoc [ ("kind", `String "Call"); ("value", `String s)]
+  | `Assoc [ ("kind", `String "CALL"); ("value", `String s)] -> SM.CALL s
+  | `Assoc [ ("kind", `String "Begin"); ("value", `List args)]
+  | `Assoc [ ("kind", `String "BEGIN"); ("value", `List args)] -> 
+      let args = List.map (function `String s -> s 
+      | _ -> failwith "Bad arg in BEGIN") args
+      in
+      SM.BEGIN args
+  | `String s
+  | `Assoc [ ("kind", `String "LD"); ("value", `String s)]
+  | `Assoc [ ("kind", `String "Load"); ("value", `String s)] -> SM.LD s
+  | _ -> fk "неразобранный случай"
+  in
+  function 
+  | `List xs -> List.map helper xs
+  | _ -> fk2 "ожидался список"
+    
 let __ () = 
   let input = {|  
   read(n);
