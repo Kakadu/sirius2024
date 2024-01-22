@@ -387,3 +387,30 @@ module Parser =
 
 let ast_to_json : module_ -> Yojson.Safe.t = fun _ -> assert false
 let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t = fun _ -> assert false
+
+let __ () = 
+  let input = {|  
+  read(n);
+  fac:=1;
+  while (n>1) do 
+    fac := fac * n;
+    n := n - 1
+  od;
+  write(fac)
+|} in 
+  match Parser.parse input with 
+  | `Ok _ -> print_endline "OK"
+  | `Fail msg -> print_endline msg
+
+let __ () = 
+  let input = {|  
+    fun fact (n) {
+      if n <= 1 then f := 1 else fact (n-1); f := f * n fi
+   }
+   
+   fact (5);
+   write (f)
+  |} in 
+  match Parser.parse input with 
+  | `Ok _ -> print_endline "OK"
+  | `Fail msg -> print_endline msg
