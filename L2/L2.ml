@@ -1,5 +1,7 @@
 open GT
 
+let failwiths fmt = Printf.kprintf failwith fmt
+
 module Algebra =
   struct
   
@@ -84,10 +86,11 @@ module Program =
         let module M = Map.Make (String) in
         let m =
           List.fold_left
-            (fun m (Fun (name, args, body)) ->
-               match M.find_opt name m with
+            (fun m -> function Fun (name, args, body) ->
+               (match M.find_opt name m with
                | None -> M.add name (args, body) m
-               | _    -> failwith (Printf.sprintf "duplicate function \"%s\" definition" name)
+               | _    -> failwiths "duplicate function %S definition" name)
+            | _ -> failwith "will not happen"
             )
             M.empty
             fundecls
@@ -95,10 +98,11 @@ module Program =
         (fun n ->
            match M.find_opt n m with
            | Some smth -> smth
-           | None      -> failwith (Printf.sprintf "undefined function \"%s\"" n)
+           | None      -> failwiths "undefined function %S" n
         )
       in
       let rec eval ((st, i, o) as c) = function
+      | Fun _ -> failwith "Should not happen"
       | Skip  -> c
         
       | Read x ->
@@ -201,7 +205,7 @@ module SM =
           (match s with
            | x :: y :: s' -> eval (st, Algebra.evalOp op y x :: s', cs, i, o) tl
            | _            ->
-             failwith (Printf.sprintf "exhausted stack at BINOP %s: \"%s\"" op ((show(list) (show(int))) s))
+             failwiths "exhausted stack at BINOP %s: %S" op ((show(list) (show(int))) s)
           )
         | ST x :: tl ->
           (match s with
@@ -248,7 +252,7 @@ module SM =
               (fun (st', s') arg ->
                  match s' with
                  | a :: s'' -> Program.update st' arg a, s''
-                 | _        -> failwith "exhausted stack at \"BEGIN %s\"" @@ (show(list) (show(string))) fargs                
+                 | _        -> failwiths "exhausted stack at \"BEGIN %s\"" @@ (show(list) (show(string))) fargs                
               )
               (st, s)
               fargs
@@ -345,7 +349,7 @@ module Parser =
         | Some t -> Program.Seq (h, t)
       };
 
-      input: !(Util.list)[ostap (DECIMAL)]
+      input: DECIMAL*
     )
 
     let parse_input =
@@ -487,3 +491,50 @@ let __ () =
   match Parser.parse input with 
   | `Ok _ -> print_endline "OK"
   | `Fail msg -> print_endline msg
+
+let _ = 
+  let j  =`List
+  [
+    (* main *)
+    `String "READ";
+    `Assoc [ ("kind", `String "CALL"); ("value", `String "fact") ];
+    `String "END";
+    (* function helper *)
+    `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper") ];
+    `Assoc
+      [
+        ("kind", `String "BEGIN");
+        ("value", `List [ `String "n"; `String "acc" ]);
+      ];
+    (* n == 1 *)
+    `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+    `Int 1;
+    `Assoc [ ("kind", `String "Binop"); ("value", `String "==") ];
+    `Assoc [ ("kind", `String "JZ"); ("value", `String "helper_else") ];
+    `Assoc [ ("kind", `String "Load"); ("value", `String "acc") ];
+    `String "WRITE";
+    `Assoc [ ("kind", `String "JMP"); ("value", `String "helper_fin") ];
+    `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper_else") ];
+    (* acc*n *)
+    `Assoc [ ("kind", `String "Load"); ("value", `String "acc") ];
+    `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+    `Assoc [ ("kind", `String "Binop"); ("value", `String "*") ];
+    (* n-1 *)
+    `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+    `Int 1;
+    `Assoc [ ("kind", `String "Binop"); ("value", `String "-") ];
+
+    `Assoc [ ("kind", `String "CALL"); ("value", `String "helper") ];
+    `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper_fin") ];
+    `String "END";
+    (* function fact *)
+    `Assoc [ ("kind", `String "LABEL"); ("value", `String "fact") ];
+    `Assoc [ ("kind", `String "BEGIN"); ("value", `List [ `String "n" ]) ];
+    `Int 1;
+    `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+    `Assoc [ ("kind", `String "CALL"); ("value", `String "helper") ];
+    `String "END";
+  ]
+in 
+match json_to_bytecode ~fk:(fun _ -> assert false) ~fk2:(fun _ -> assert false) j with 
+| bc -> Format.printf "%a\n%!" (Format.pp_print_list Format.pp_print_int) (SM.eval [3] bc )

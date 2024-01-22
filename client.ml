@@ -97,11 +97,15 @@ od;
 write(fac)
     |}
 
-    let envL1 = "3, 2, 1"
+    let envL1 = "3 2 1"
 
     let bcL2 =
       `List
         [
+          (* main *)
+          `String "READ";
+          `Assoc [ ("kind", `String "CALL"); ("value", `String "fact") ];
+          `String "END";
           (* function helper *)
           `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper") ];
           `Assoc
@@ -118,27 +122,24 @@ write(fac)
           `String "WRITE";
           `Assoc [ ("kind", `String "JMP"); ("value", `String "helper_fin") ];
           `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper_else") ];
-          (* n-1 *)
-          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
-          `Int 1;
-          `Assoc [ ("kind", `String "Binop"); ("value", `String "-") ];
           (* acc*n *)
           `Assoc [ ("kind", `String "Load"); ("value", `String "acc") ];
           `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
           `Assoc [ ("kind", `String "Binop"); ("value", `String "*") ];
+          (* n-1 *)
+          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+          `Int 1;
+          `Assoc [ ("kind", `String "Binop"); ("value", `String "-") ];
           `Assoc [ ("kind", `String "CALL"); ("value", `String "helper") ];
           `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper_fin") ];
           `String "END";
           (* function fact *)
           `Assoc [ ("kind", `String "LABEL"); ("value", `String "fact") ];
           `Assoc [ ("kind", `String "BEGIN"); ("value", `List [ `String "n" ]) ];
-          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
           `Int 1;
+          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
           `Assoc [ ("kind", `String "CALL"); ("value", `String "helper") ];
           `String "END";
-          (* main *)
-          `String "READ";
-          `Assoc [ ("kind", `String "CALL"); ("value", `String "fact") ];
         ]
       |> Yojson.Safe.pretty_to_string
 
@@ -152,7 +153,7 @@ write(fac)
     read(n);
     fact(n)|}
 
-    let envL2 = "3, 2, 1"
+    let envL2 = "3 2 1"
   end in
   let known =
     let ls =
