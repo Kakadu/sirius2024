@@ -3,6 +3,7 @@
  (modules client)
  (libraries
   L1
+  L2
   yojson
   ;
   )

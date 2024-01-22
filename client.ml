@@ -10,9 +10,33 @@ let log fmt =
 
 let failwiths fmt = Printf.kprintf failwith fmt
 
-module Lang = L1
+module type LANG = sig
+  type module_
+
+  module Program : sig
+    val eval : int list -> module_ -> int list
+  end
+
+  module Parser : sig
+    val parse_input : string -> [ `Ok of int list | `Fail of string ]
+    val parse : string -> [ `Ok of module_ | `Fail of string ]
+  end
+
+  module SM : sig
+    type insn
+    type t
+
+    val eval : int list -> t -> int list
+  end
+
+  val ast_to_json : module_ -> Yojson.Safe.t
+
+  val json_to_bytecode :
+    fk:(string -> SM.insn) -> fk2:(string -> SM.t) -> Yojson.Safe.t -> SM.t
+end
 
 module Names = struct
+  let lang_desc = "language-description-span"
   let env = "env-area"
   let env_status = "env-area-status"
   let lama_src = "lama-src-area"
@@ -29,13 +53,89 @@ let get_and_coerce name dest =
   | None -> failwiths "Can get element %S" name
   | Some x -> x
 
+let lang_desc, m, default_bytecode, default_lama =
+  let module Default = struct
+    let bcL1 =
+      `List
+        [
+          `String "READ";
+          `Assoc [ ("kind", `String "ST"); ("value", `String "n") ];
+          `Int 1;
+          `Assoc [ ("kind", `String "ST"); ("value", `String "fac") ];
+          (* loop *)
+          `Assoc [ ("kind", `String "LABEL"); ("value", `String "LOOP") ];
+          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+          `Int 1;
+          `Assoc [ ("kind", `String "Binop"); ("value", `String ">") ];
+          `Assoc [ ("kind", `String "JZ"); ("value", `String "FIN") ];
+          (* fac := fac * n *)
+          `Assoc [ ("kind", `String "Load"); ("value", `String "fac") ];
+          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+          `Assoc [ ("kind", `String "Binop"); ("value", `String "*") ];
+          `Assoc [ ("kind", `String "ST"); ("value", `String "fac") ];
+          (* n := n-1 *)
+          `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
+          `Int 1;
+          `Assoc [ ("kind", `String "Binop"); ("value", `String "-") ];
+          `Assoc [ ("kind", `String "ST"); ("value", `String "n") ];
+          `Assoc [ ("kind", `String "JMP"); ("value", `String "LOOP") ];
+          (* fin *)
+          `Assoc [ ("kind", `String "LABEL"); ("value", `String "FIN") ];
+          `Assoc [ ("kind", `String "Load"); ("value", `String "fac") ];
+          `String "WRITE";
+        ]
+      |> Yojson.Safe.pretty_to_string
+
+    let lamaL1 =
+      {| 
+read(n);
+fac:=1;
+while (n>1) do 
+  fac := fac * n;
+  n := n - 1
+od;
+write(fac)
+    |}
+
+    let bcL2 = ""
+    let lamaL2 = ""
+  end in
+  let known =
+    let ls =
+      let open Default in
+      [
+        ("#L1", ("Язык номер 1", (module L1 : LANG), bcL1, lamaL1));
+        ("#L2", ("Язык номер 2", (module L2 : LANG), bcL2, lamaL2));
+      ]
+    in
+    let data = List.assoc "#L1" ls in
+    ("#", data) :: ls
+  in
+  let lang_queried = Js.to_string Dom_html.window##.location##.hash in
+  match List.assoc lang_queried known with
+  | exception Not_found ->
+      Dom_html.window##alert
+        (Js.string
+           (Format.sprintf
+              "Язык %S не известен\n\n\
+               Припишите к адресной строке что-то из  %s, и прожмите Ctrl+F5"
+              lang_queried
+              (String.concat ", " (List.map fst known))));
+      assert false
+  | desc, data, a, b -> (desc, data, a, b)
+
+module Lang : LANG = (val m)
+
+let () =
+  let el = get_and_coerce Names.lang_desc Dom_html.CoerceTo.element in
+  el##.textContent := Js.some @@ Js.string lang_desc
+
 let pp_int_list ppf xs =
   (Format.pp_print_list
      ~pp_sep:(fun ppf () -> Format.pp_print_space ppf ())
      Format.pp_print_int)
     ppf xs
 
-let parse_input s = Lang.Parser.parse_input s
 let ( let* ) = Option.bind
 let return = Option.some
 
@@ -86,7 +186,7 @@ let on_lama_changed =
 
     let env_area = get_and_coerce Names.env Dom_html.CoerceTo.textarea in
     let* state =
-      match parse_input (Js.to_string env_area##.value) with
+      match Lang.Parser.parse_input (Js.to_string env_area##.value) with
       | `Fail msg ->
           report_lama_error
             ("Can't parse env. " ^ msg ^ ". Going to use default one");
@@ -169,7 +269,7 @@ let on_bytecode_changed : unit -> unit option =
               get_and_coerce Names.env Dom_html.CoerceTo.textarea
             in
             let state : int list =
-              match parse_input (Js.to_string env_area##.value) with
+              match Lang.Parser.parse_input (Js.to_string env_area##.value) with
               | `Fail msg ->
                   log "Can't parse: %s.\n%s %d" msg __FILE__ __LINE__;
                   report_error
@@ -207,7 +307,7 @@ let () =
   area##.oninput :=
     Dom.handler (fun _ ->
         let _ : unit option =
-          match Lang.parse_input (Js.to_string area##.value) with
+          match Lang.Parser.parse_input (Js.to_string area##.value) with
           | `Fail msg ->
               status##.style##.color := Js.string "color: red;";
               status##.textContent :=
@@ -229,56 +329,14 @@ let () =
 
 let () =
   let area = get_and_coerce Names.lama_src Dom_html.CoerceTo.textarea in
-  area##.textContent :=
-    Js.some
-    @@ Js.string
-         {| 
-  read(n);
-  fac:=1;
-  while (n>1) do 
-    fac := fac * n;
-    n := n - 1
-  od;
-  write(fac)
-  |}
+  area##.textContent := Js.some @@ Js.string default_lama
 
 let () =
   let area = get_and_coerce Names.bytecode_src Dom_html.CoerceTo.textarea in
-  let j =
-    `List
-      [
-        `String "READ";
-        `Assoc [ ("kind", `String "ST"); ("value", `String "n") ];
-        `Int 1;
-        `Assoc [ ("kind", `String "ST"); ("value", `String "fac") ];
-        (* loop *)
-        `Assoc [ ("kind", `String "LABEL"); ("value", `String "LOOP") ];
-        `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
-        `Int 1;
-        `Assoc [ ("kind", `String "Binop"); ("value", `String ">") ];
-        `Assoc [ ("kind", `String "JZ"); ("value", `String "FIN") ];
-        (* fac := fac * n *)
-        `Assoc [ ("kind", `String "Load"); ("value", `String "fac") ];
-        `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
-        `Assoc [ ("kind", `String "Binop"); ("value", `String "*") ];
-        `Assoc [ ("kind", `String "ST"); ("value", `String "fac") ];
-        (* n := n-1 *)
-        `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
-        `Int 1;
-        `Assoc [ ("kind", `String "Binop"); ("value", `String "-") ];
-        `Assoc [ ("kind", `String "ST"); ("value", `String "n") ];
-        `Assoc [ ("kind", `String "JMP"); ("value", `String "LOOP") ];
-        (* fin *)
-        `Assoc [ ("kind", `String "LABEL"); ("value", `String "FIN") ];
-        `Assoc [ ("kind", `String "Load"); ("value", `String "fac") ];
-        `String "WRITE";
-      ]
-  in
-  area##.textContent := Js.some @@ Js.string (Yojson.Safe.pretty_to_string j)
+
+  area##.textContent := Js.some @@ Js.string default_bytecode
 
 let () =
   let _ : unit option = on_lama_changed () in
   let _ : unit option = on_bytecode_changed () in
   ()
-
-let () = console##log Dom_html.window##.location##.hash

@@ -193,7 +193,9 @@ module SM =
       List.rev o
       
   end
-  
+
+type module_ = Program.t
+
 module Parser =
   struct
 
@@ -300,7 +302,7 @@ module Parser =
  
   end
 
-let ast_to_json =
+let ast_to_json : Program.t -> Yojson.Safe.t =
   let rec helper_e = function 
   | Program.Expr.Var s -> `Assoc [("kind", `String "Var"); "name", `String s]
   | Const n ->  `Assoc [("kind", `String "Const"); "value", `Int n]
@@ -349,9 +351,6 @@ let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t =
   function 
   | `List xs -> List.map helper xs
   | _ -> fk2 "ожидался список"
-
-
-let parse_input _ = `Ok [1;2;3]
 
 let () =
   let test_input input = 

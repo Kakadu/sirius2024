@@ -266,6 +266,8 @@ module SM =
       
   end
   
+type module_ = Program.t list * Program.t
+
 module Parser =
   struct
 
@@ -382,3 +384,6 @@ module Parser =
           (ostap (fundecls stmt -EOF))
  
   end
+
+let ast_to_json : module_ -> Yojson.Safe.t = fun _ -> assert false
+let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t = fun _ -> assert false
