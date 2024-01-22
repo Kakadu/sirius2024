@@ -103,10 +103,10 @@ module Parser =
           `Lefta, [ostap ("&"), binop "&"];
 
           (* Relational operators *)
-          `Nona, [ostap ("<" ), binop "<";
-                  ostap ("<="), binop "<=";
-                  ostap (">" ), binop ">";
+          `Nona, [ostap ("<="), binop "<=";
+                  ostap ("<" ), binop "<";
                   ostap (">="), binop ">=";
+                  ostap (">" ), binop ">";
                   ostap ("=="), binop "==";
                   ostap ("<>"), binop "<>";
                  ];
