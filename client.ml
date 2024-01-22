@@ -98,7 +98,15 @@ write(fac)
     |}
 
     let bcL2 = ""
-    let lamaL2 = ""
+
+    let lamaL2 =
+      {|
+  fun fact (n) {
+    if n <= 1 then f := 1 else fact (n-1); f := f * n fi
+  }
+   
+  fact (5);
+  write (f)|}
   end in
   let known =
     let ls =
