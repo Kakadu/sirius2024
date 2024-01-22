@@ -1,0 +1,29 @@
+\section{Процедуры с динамическим связыванием}
+
+Абстрактный синтаксис:
+
+\[
+\mathscr{F}=\primi{fun}\;x\,x*\,\mathscr{S}
+\]
+
+Теперь программы~--- это пары: список определения функций, собственно программа.
+
+Дополнительные операции над состояниями:
+
+\[
+\begin{array}{lcl}
+  \primi{alloc}\,st\,\epsilon\,\epsilon&=&st\\
+  \primi{alloc}\,st\,(x:xs)\,(n:ns)&=&\primi{alloc}\,(st[x\gets n])\,xs\,ns\\
+  \multicolumn{3}{l}{\mbox{иначе не определено}}
+\end{array}
+\]
+
+\[
+\primi{restore}\,st\,X\,st^\prime=y\mapsto\left\{
+\begin{array}{rcl}
+  st\,y&,&y\in X\mbox{ и }st\, y\mbox{ определено}\\
+  \mbox{не определено}&,&y\in X\mbox{ и }st\, y\mbox{ не определено}\\
+  st^\prime\,y&,&\mbox{иначе}
+\end{array}
+\right.
+\]
