@@ -316,7 +316,7 @@ module Parser =
       
       expr: expression[primary];
 
-      fundecls: !(Util.list0 fundecl);
+      fundecls: fundecl*;
 
       fundecl:
         "fun" f:LIDENT
