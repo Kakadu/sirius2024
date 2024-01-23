@@ -3,10 +3,13 @@
 Абстрактный синтаксис:
 
 \[
-\mathscr{F}=\primi{fun}\;x\,x*\,\mathscr{S}
+\begin{array}{rcl}
+  \mathscr{F}&=&\primi{fun}\;x\,x*\,\mathscr{S}\\
+  \mathscr{S}&+=& \primi{call}\;x\,\,e*
+\end{array}
 \]
 
-Теперь программы~--- это пары: список определения функций, собственно программа.
+Теперь программы~--- это пары: список определений функций, собственно программа.
 
 Дополнительные операции над состояниями:
 
@@ -26,4 +29,56 @@
   st^\prime\,y&,&\mbox{иначе}
 \end{array}
 \right.
+\]
+
+Окружение~--- отображение имен функции в пары (список имен параметров, тело функции):
+
+\[
+\Gamma : \mathscr{X} \to \mathscr{X}^*\times \mathscr{S}
+\]
+
+Во все ``старые'' правила надо добавить слева ``$\Gamma\vdash\dots$''.
+
+Одно новое правило для вызова:
+
+\[
+\trule{\Gamma\,f=(x_1,\dots,x_k,\,s)\quad \trans{st}{e_i}{n_i}\quad\withenv{\Gamma}{\trans{\inbr{\primi{alloc}\;st\,(x_1\dots x_k)\,(n_1\dots n_k),\,i,\,o}}{s}{\inbr{st^\prime,\,i^\prime,\,o^\prime}}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,i,\,o}}{\primi{call}\;f\,e_1\dots e_k}{\inbr{\primi{restore}\;st\,(x_1\dots x_k)\,st^\prime,\,i^\prime,\,o^\prime}}}}
+\]
+
+\section{Стековая машина}
+
+Новые инструкции:
+
+\[
+\begin{array}{rcl}
+  \mathscr{I} & += & \cd{BEGIN}\,x^*\\
+              &    & \cd{END}\\
+              &    & \cd{CALL}\,l
+\end{array}
+\]
+
+Новый компонент кофигурации~--- стек управления, который хранит тройки (состояние, список переменных, программа).
+Для всех ``старых'' правил надо слева добавить один и тот же стек управления:
+
+\[
+\inbr{st,\,s,\,i,\,o}\to \inbr{st,\,s,\,cs,\,i,\,o}
+\]
+
+Семантика новых инструкций:
+
+\[
+\withenv{\Gamma}{\trans{\inbr{st,\,s,\,\epsilon,\,i,\,o}}{\cd{END}p}{o}}\ruleno{End}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{\primi{restore}\;st^\prime\,(x_1\dots x_k)\,st,\,s,\,cs,\,i,\,o}}{q}{o}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,s,\,(st^\prime,\,(x_1\dots x_k),\,q):cs,\,i,\,o}}{\cd{END}p}{o}}}\ruleno{Return}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{st,\,s,\,(st,\,\epsilon,\,p):cs,\,i,\,o}}{\Gamma\;l}{o}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,s,\,cs,\,i,\,o}}{[\cd{CALL}\;l]::p}{o}}}\ruleno{Call}
+\]
+\[
+\trule{\withenv{\Gamma}{\trans{\inbr{\primi{alloc}\;st\,(x_1\dots x_k)\,(n_1\dots n_k),\,s,\,(st^\prime,\,(x_1\dots x_k),\,q):cs,\,i,\,o}}{p}{o}}}
+      {\withenv{\Gamma}{\trans{\inbr{st,\,n_1:\dots :n_k:s,\,(st^\prime,\_,q):cs,\,i,\,o}}{[\cd{BEGIN}\;x_1\dots x_k]p}{o}}}\ruleno{Begin}
 \]
