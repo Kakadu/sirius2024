@@ -53,7 +53,7 @@ let get_and_coerce name dest =
   | None -> failwiths "Can get element %S" name
   | Some x -> x
 
-let lang_desc, m, default_bytecode, default_lama, default_env =
+let lang_desc, m, (default_bytecode, default_lama, default_env) =
   let module Default = struct
     let bcL1 =
       `List
@@ -145,13 +145,13 @@ write(fac)
 
     let lamaL2 =
       {|
-    fun helper (n, acc) {
-        if n <= 1 then write (acc) else helper (n-1, acc*n)  fi
-    },
-    fun fact (n) { helper (n, 1) }
-    
-    read(n);
-    fact(n)|}
+fun helper (n, acc) {
+    if n <= 1 then write (acc) else helper (n-1, acc*n)  fi
+},
+fun fact (n) { helper (n, 1) }
+
+read(n);
+fact(n)|}
 
     let envL2 = "3 2 1"
   end in
@@ -159,8 +159,8 @@ write(fac)
     let ls =
       let open Default in
       [
-        ("#L1", ("Язык номер 1", (module L1 : LANG), bcL1, lamaL1, envL1));
-        ("#L2", ("Язык номер 2", (module L2 : LANG), bcL2, lamaL2, envL2));
+        ("#L1", ("Язык номер 1", (module L1 : LANG), (bcL1, lamaL1, envL1)));
+        ("#L2", ("Язык номер 2", (module L2 : LANG), (bcL2, lamaL2, envL2)));
       ]
     in
     let data = List.assoc "#L1" ls in
@@ -173,11 +173,11 @@ write(fac)
         (Js.string
            (Format.sprintf
               "Язык %S не известен\n\n\
-               Припишите к адресной строке что-то из  %s, и прожмите Ctrl+F5"
+               Припишите к адресной строке что-то из %s, и прожмите Ctrl+F5"
               lang_queried
               (String.concat ", " (List.map fst known))));
       assert false
-  | desc, data, a, b, c -> (desc, data, a, b, c)
+  | x -> x
 
 module Lang : LANG = (val m)
 
@@ -185,7 +185,7 @@ let () =
   let el = get_and_coerce Names.lang_desc Dom_html.CoerceTo.element in
   el##.textContent := Js.some @@ Js.string lang_desc
 
-let pp_int_list ppf xs =
+let[@ocaml.warning "-32"] pp_int_list ppf xs =
   (Format.pp_print_list
      ~pp_sep:(fun ppf () -> Format.pp_print_space ppf ())
      Format.pp_print_int)
@@ -208,14 +208,14 @@ let on_lama_changed =
     (* print_endline "report lama error"; *)
     let el = get_and_coerce Names.lama_output Dom_html.CoerceTo.div in
     el##.style##.color := Js.string "color: red;";
-    el##.textContent := Js.some @@ Js.string (Printf.sprintf "fail: %s" msg)
+    el##.textContent := Js.some @@ Js.string (Printf.sprintf "ОШИБКА: %s" msg)
   in
 
   let on_input ?(copy = false) () =
     let* ast =
       match Lang.Parser.parse (Js.to_string area##.value) with
       | `Fail msg ->
-          report_lama_error ("Can't parse program. " ^ msg);
+          report_lama_error ("Не разобрать программу. " ^ msg);
           (get_and_coerce Names.lama_json_area Dom_html.CoerceTo.pre)##.textContent
           := Js.null;
           None
@@ -243,11 +243,10 @@ let on_lama_changed =
     let* state =
       match Lang.Parser.parse_input (Js.to_string env_area##.value) with
       | `Fail msg ->
-          report_lama_error
-            ("Can't parse env. " ^ msg ^ ". Going to use default one");
+          report_lama_error ("Не разобраться в входе. " ^ msg);
           None
       | `Ok env ->
-          log "Environment: %a" pp_int_list env;
+          (* log "Environment: %a" pp_int_list env; *)
           report_success [];
           Some env
     in
@@ -255,7 +254,7 @@ let on_lama_changed =
     let* () =
       try
         let rez = Lang.Program.eval state ast in
-        log "rez = %a, copy = %b\n" pp_int_list rez copy;
+        (* log "rez = %a, copy = %b\n" pp_int_list rez copy; *)
         report_success rez;
         Some ()
       with exc ->
@@ -298,12 +297,11 @@ let on_bytecode_changed : unit -> unit option =
   let report_success xs =
     let el = get_and_coerce Names.bytecode_output Dom_html.CoerceTo.pre in
     el##.textContent :=
-      Js.some
-      @@ Js.string ("OK " ^ String.concat " " (List.map string_of_int xs))
+      Js.some @@ Js.string (String.concat " " (List.map string_of_int xs))
   in
   let report_error msg =
     let el = get_and_coerce Names.bytecode_output Dom_html.CoerceTo.pre in
-    el##.textContent := Js.some @@ Js.string (Printf.sprintf "fail: %s" msg)
+    el##.textContent := Js.some @@ Js.string (Printf.sprintf "Ошибка: %s" msg)
   in
 
   let on_input () : unit option =
@@ -327,11 +325,10 @@ let on_bytecode_changed : unit -> unit option =
               match Lang.Parser.parse_input (Js.to_string env_area##.value) with
               | `Fail msg ->
                   log "Can't parse: %s.\n%s %d" msg __FILE__ __LINE__;
-                  report_error
-                    ("Can't parse env. " ^ msg ^ ". Goging to use default one");
+                  report_error ("Ошибка во входе. " ^ msg);
                   []
               | `Ok env ->
-                  log "Input list: %a" pp_int_list env;
+                  (* log "Input list: %a" pp_int_list env; *)
                   report_success [];
                   env
             in
@@ -339,7 +336,7 @@ let on_bytecode_changed : unit -> unit option =
             let () =
               try
                 let rez = Lang.SM.eval state bc in
-                log "rez = %a\n" pp_int_list rez;
+                (* log "rez = %a\n" pp_int_list rez; *)
                 report_success rez
               with exc -> report_error (Printexc.to_string exc)
             in
@@ -366,7 +363,7 @@ let () =
           | `Fail msg ->
               status##.style##.color := Js.string "color: red;";
               status##.textContent :=
-                Js.some (Js.string ("Can't parse env. " ^ msg));
+                Js.some (Js.string ("Ошибка во входе. " ^ msg));
               Some ()
           | `Ok _env ->
               status##.style##.color := Js.string "color: black;";
