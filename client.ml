@@ -173,10 +173,15 @@ fact(n)|}
 
     let lamaL3 =
       {|
-let fix = { f x ->  f ({ eta -> fix(f, eta) },x) } in 
-( let fac = { self n -> if n<=1 then 1 else  n*self(n-1) fi } in
-  write(fix(fac, 4))
-)|}
+let f = {f n ->
+  if n < 2 
+  then 1
+  else n * f (f, n-1)
+  fi
+}
+in
+write (f (f, 5))
+     |}
   end in
   let known =
     let ls =
