@@ -304,7 +304,7 @@ module Parser =
       primary: let_expr;
 
       let_expr:
-       "let" x:LIDENT "=" e:expr "in" f:seq_expr {Program.Let (x, e, f)}
+       "let" x:LIDENT "=" e:expr "in" f:let_expr {Program.Let (x, e, f)}
       | seq_expr;
 
       seq_expr: s:!(Util.listBy)[ostap (";")][call_expr] {
