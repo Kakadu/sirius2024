@@ -169,6 +169,7 @@ read(n);
 fact(n)|}
 
     let envL2 = "3 2 1"
+    let bcL3 = "[]"
 
     let lamaL3 =
       {|
@@ -183,7 +184,7 @@ let fix = { f x ->  f ({ eta -> fix(f, eta) },x) } in
       [
         ("#L1", ("Язык номер 1", (module L1 : LANG), (bcL1, lamaL1, envL1)));
         ("#L2", ("Язык номер 2", (module L2 : LANG), (bcL2, lamaL2, envL2)));
-        ("#L3", ("Язык номер 3", (module L3 : LANG), ("", lamaL3, envL2)));
+        ("#L3", ("Язык номер 3", (module L3 : LANG), (bcL3, lamaL3, envL2)));
       ]
     in
     let data = List.assoc "#L1" ls in
@@ -275,14 +276,14 @@ let on_lama_changed =
     in
 
     let* () =
-      try
-        let rez = Lang.Program.eval state ast in
-        (* log "rez = %a, copy = %b\n" pp_int_list rez copy; *)
-        report_success rez;
-        Some ()
-      with exc ->
-        report_lama_error (Printexc.to_string exc);
-        None
+      match Lang.Program.eval state ast with
+      | rez ->
+          (* log "rez = %a, copy = %b\n" pp_int_list rez copy; *)
+          report_success rez;
+          Some ()
+      | exception exc ->
+          report_lama_error (Printexc.to_string exc);
+          None
     in
     let () =
       if copy then
