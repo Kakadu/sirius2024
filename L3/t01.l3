@@ -1,0 +1,7 @@
+let a = 1 in
+let f = { -> write (a)} in
+let a = 5 in
+f ();
+write (a)
+-- input: none
+-- output: 1 5

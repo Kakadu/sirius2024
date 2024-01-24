@@ -1,0 +1,7 @@
+let f = {n -> {k -> n + k}} in
+let g = f (5) in
+write (f (5)(6));
+write (g (6));
+write (g(7))
+-- input: none
+-- output: 11 11 12

@@ -1,0 +1,10 @@
+let f = {f n ->
+   if n < 2 
+   then 1
+   else n * f (f, n-1)
+   fi
+}
+in
+write (f (f, 5))
+-- input: none
+-- output: 120

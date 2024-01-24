@@ -1,0 +1,15 @@
+let z = {f ->
+  {x  -> f ({z -> x(x)(z)})} 
+  ({x -> f ({z -> x(x)(z)})})
+}
+in 
+let f = {f -> {n -> 
+  if n < 2
+  then 1
+  else n * f (n-1)
+  fi
+}}
+in 
+write (z (f) (5))
+-- input: none
+-- output: 120

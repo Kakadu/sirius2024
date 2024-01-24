@@ -1,0 +1,11 @@
+let f = {f n ->
+   write (n);
+   if n == 0 
+   then 0
+   else f (f, n-1)
+   fi
+}
+in
+write (f (f, 5))
+-- input: none
+-- output: 5 4 3 2 1 0 0
