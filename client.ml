@@ -47,7 +47,6 @@ module L3 : LANG = struct
 
   type module_ = Program.t
 
-  let ast_to_json _ = `List []
   let json_to_bytecode ~fk:_ ~fk2:_ _ = 0
 end
 
