@@ -461,7 +461,9 @@ let fix = { f x -> f ({ eta -> fix(f, eta) },x) } in
 )
 |} in 
   match Parser.parse input with 
-  | `Ok ast -> 
-    Format.printf "%a\n%!" (Format.pp_print_list Format.pp_print_int) (Program.eval [3] ast)
   | `Fail msg -> print_endline msg
+  | `Ok ast -> 
+    match Program.eval [3] ast with 
+    | rez -> Format.printf "%a\n%!" (Format.pp_print_list Format.pp_print_int) rez
+    | exception exc -> print_endline (Printexc.to_string exc)
  
