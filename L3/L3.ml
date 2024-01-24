@@ -120,7 +120,7 @@ module Program =
         let (st', i', o'), fv :: args = evals c (f :: es) in
         (match fv with
          | `C (fargs, st, s) ->
-           let st'' = alloc st' (fargs, args) in
+           let st'' = alloc st (fargs, args) in
            let (st''', i'', o''), v = eval (st'', i', o') s in
            (restore st' fargs st''', i'', o''), v
            
