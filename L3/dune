@@ -1,0 +1,20 @@
+(env
+ (dev
+  (flags
+   (:standard -warn-error -A))))
+
+(library
+ (name L2)
+ ;
+ (libraries ostap GT yojson)
+ (modules L2)
+ (wrapped false)
+ (flags
+  (:standard -rectypes))
+ (preprocessor_deps
+  (file %{project_root}/pp5+gt+plugins+ostap+dump.byte)
+  ;(file %{project_root}/src/pp5+gt+plugins+ostap+dump.exe)
+  )
+ (preprocess
+  (action
+   (run %{project_root}/pp5+gt+plugins+ostap+dump.byte %{input-file}))))
