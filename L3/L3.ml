@@ -375,47 +375,44 @@ module Parser =
  
   end
   
-(*
-let ast_to_json : module_ -> Yojson.Safe.t = 
-  let rec helper_e = function 
-  | Program.Expr.Var s -> `Assoc [("kind", `String "Var"); "name", `String s]
-  | Const n ->  `Assoc [("kind", `String "Const"); "value", `Int n]
-  | Binop (op, l, r) -> 
-      `Assoc  [ ("kind", `String "op"); ("name", `String op)
-              ; ("left", helper_e l); ("right", helper_e r)
-              ]
-  in 
+
+let ast_to_json : Program.t -> Yojson.Safe.t = 
   let rec helper = function 
   | Program.Skip -> `String "Skip"
-  | Read s -> `Assoc [("kind", `String "Read"); "name", `String s]
-  | Write e  -> `Assoc [("kind", `String "Write"); "value", helper_e e]
-  | Assn (l,r)  -> `Assoc [("kind", `String "Assn"); "lvalue", `String l; "rvalue", helper_e r]
+  | Const n ->  `Assoc [("kind", `String "Const"); "value", `Int n]
+  | Binop (op, l, r) -> 
+    `Assoc  [ ("kind", `String "Op"); ("name", `String op)
+            ; ("left", helper l); ("right", helper r)
+            ]
+  | Var s -> `Assoc [("kind", `String "Var"); "name", `String s]
+  | Read -> `Assoc [("kind", `String "Read") ]
+  | Write e  -> `Assoc [("kind", `String "Write"); "value", helper e]
   | If (cond,th,el)  -> 
-    `Assoc  [ ("kind", `String "if"); "cond", helper_e cond
+    `Assoc  [ ("kind", `String "If"); "cond", helper cond
             ; "then", helper th; "else", helper el ]
-  | While (cond,body)  -> 
-      `Assoc  [ ("kind", `String "While"); "cond", helper_e cond
-              ; "body", helper body ]
+  
   | Seq (l,r)  -> 
     `Assoc  [ ("kind", `String "Seq")
             ; "left", helper l; "right", helper r ]
-  | Call (name, args) -> 
-    `Assoc  [ ("kind", `String "Call"); "func", `String name
-            ; "args", `List (List.map helper_e args) ]
-  | Fun (name, params, body) ->
-    `Assoc  [ ("kind", `String "Fun"); ("name", `String name)
+  | Call (fe, args) -> 
+    `Assoc  [ ("kind", `String "Call"); "func", helper fe
+            ; "args", `List (List.map helper args) ]
+  | Fun (params, body) ->
+    `Assoc  [ ("kind", `String "Fun")
             ; "params", `List (List.map (fun x -> `String x) params)
             ; ("body", helper body)
             ]
+  | Let (name, rhs, body) ->
+    `Assoc  [ ("kind", `String "Let")
+            ; "name", `String name
+            ; "rhs", helper rhs
+            ; ("body", helper body)
+            ]            
   in
-  fun (funs, prog) -> 
-    `Assoc [ 
-      ("funs", `List (List.map helper funs)); 
-      ("prog", helper prog)
-    ]
+  helper
   
 
-
+(*
 let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t = 
   let helper = function 
   | `Int n
@@ -452,77 +449,19 @@ let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t =
   function 
   | `List xs -> List.map helper xs
   | _ -> fk2 "ожидался список"
-    
-let __ () = 
-  let input = {|  
-  read(n);
-  fac:=1;
-  while (n>1) do 
-    fac := fac * n;
-    n := n - 1
-  od;
-  write(fac)
+  
+*)
+
+  
+let () = 
+  let input = {|
+let fix = { f x -> f ({ eta -> fix(f, eta) },x) } in 
+( let fac = { self n -> if n<=1 then 1 else  n*self(n-1) fi } in
+  write(fix(fac, 4))  
+)
 |} in 
   match Parser.parse input with 
-  | `Ok _ -> print_endline "OK"
+  | `Ok ast -> 
+    Format.printf "%a\n%!" (Format.pp_print_list Format.pp_print_int) (Program.eval [3] ast)
   | `Fail msg -> print_endline msg
-
-let __ () = 
-  let input = {|  
-    fun fact (n) {
-      if n <= 1 then f := 1 else fact (n-1); f := f * n fi
-   }
-   
-   fact (5);
-   write (f)
-  |} in 
-  match Parser.parse input with 
-  | `Ok _ -> print_endline "OK"
-  | `Fail msg -> print_endline msg
-
-let _ = 
-  let j  =`List
-  [
-    (* main *)
-    `String "READ";
-    `Assoc [ ("kind", `String "CALL"); ("value", `String "fact") ];
-    `String "END";
-    (* function helper *)
-    `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper") ];
-    `Assoc
-      [
-        ("kind", `String "BEGIN");
-        ("value", `List [ `String "n"; `String "acc" ]);
-      ];
-    (* n == 1 *)
-    `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
-    `Int 1;
-    `Assoc [ ("kind", `String "Binop"); ("value", `String "==") ];
-    `Assoc [ ("kind", `String "JZ"); ("value", `String "helper_else") ];
-    `Assoc [ ("kind", `String "Load"); ("value", `String "acc") ];
-    `String "WRITE";
-    `Assoc [ ("kind", `String "JMP"); ("value", `String "helper_fin") ];
-    `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper_else") ];
-    (* acc*n *)
-    `Assoc [ ("kind", `String "Load"); ("value", `String "acc") ];
-    `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
-    `Assoc [ ("kind", `String "Binop"); ("value", `String "*") ];
-    (* n-1 *)
-    `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
-    `Int 1;
-    `Assoc [ ("kind", `String "Binop"); ("value", `String "-") ];
-
-    `Assoc [ ("kind", `String "CALL"); ("value", `String "helper") ];
-    `Assoc [ ("kind", `String "LABEL"); ("value", `String "helper_fin") ];
-    `String "END";
-    (* function fact *)
-    `Assoc [ ("kind", `String "LABEL"); ("value", `String "fact") ];
-    `Assoc [ ("kind", `String "BEGIN"); ("value", `List [ `String "n" ]) ];
-    `Int 1;
-    `Assoc [ ("kind", `String "Load"); ("value", `String "n") ];
-    `Assoc [ ("kind", `String "CALL"); ("value", `String "helper") ];
-    `String "END";
-  ]
-in 
-match json_to_bytecode ~fk:(fun _ -> assert false) ~fk2:(fun _ -> assert false) j with 
-| bc -> Format.printf "%a\n%!" (Format.pp_print_list Format.pp_print_int) (SM.eval [3] bc ) *)
+ 
