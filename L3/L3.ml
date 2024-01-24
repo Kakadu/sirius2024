@@ -99,7 +99,7 @@ module Program =
       | Write e ->
         let ((st', i', o'), n) = eval c e in
         (match n with
-         | `I n -> ((st', i', n :: o), `U)
+         | `I n -> ((st', i', n :: o'), `U)
          | _    -> failwith "non-integer value in \"write\""
         )                   
       | If (f, t, e) ->
