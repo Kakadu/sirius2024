@@ -2,3 +2,9 @@
 	path = ostap
 	url = https://github.com/PLTools/ostap.git
 	branch = old+dune
+
+[submodule "ppx_blob"]
+	path = ppx_blob
+	url = https://github.com/actionshrimp/ppx_blob.git
+	branch = fix-for-dune-3
+

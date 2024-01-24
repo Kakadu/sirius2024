@@ -17,3 +17,20 @@
  (preprocess
   (action
    (run %{project_root}/pp5+gt+plugins+ostap+dump.byte %{input-file}))))
+
+(library
+ (name testL3)
+ (modules testL3)
+ (libraries L3)
+ (inline_tests)
+ (flags
+  (:standard -rectypes))
+ (preprocessor_deps
+  (file t01.l3)
+  (file t02.l3)
+  (file t03.l3)
+  (file t04.l3)
+  (file t05.l3)
+  (file t06.l3))
+ (preprocess
+  (pps ppx_expect ppx_blob)))

@@ -451,19 +451,3 @@ let json_to_bytecode ~fk ~fk2 : Yojson.Safe.t -> SM.t =
   | _ -> fk2 "ожидался список"
   
 *)
-
-  
-let () = 
-  let input = {|
-let fix = { f x -> f ({ eta -> fix(f, eta) },x) } in 
-( let fac = { self n -> if n<=1 then 1 else  n*self(n-1) fi } in
-  write(fix(fac, 4))  
-)
-|} in 
-  match Parser.parse input with 
-  | `Fail msg -> print_endline msg
-  | `Ok ast -> 
-    match Program.eval [3] ast with 
-    | rez -> Format.printf "%a\n%!" (Format.pp_print_list Format.pp_print_int) rez
-    | exception exc -> print_endline (Printexc.to_string exc)
- 
