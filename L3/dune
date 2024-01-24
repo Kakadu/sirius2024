@@ -4,10 +4,9 @@
    (:standard -warn-error -A))))
 
 (library
- (name L2)
- ;
+ (name L3)
  (libraries ostap GT yojson)
- (modules L2)
+ (modules L3)
  (wrapped false)
  (flags
   (:standard -rectypes))

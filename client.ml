@@ -35,6 +35,22 @@ module type LANG = sig
     fk:(string -> SM.insn) -> fk2:(string -> SM.t) -> Yojson.Safe.t -> SM.t
 end
 
+module L3 : LANG = struct
+  include L3
+
+  module SM = struct
+    type insn
+    type t = int
+
+    let eval : int list -> t -> int list = fun _ _ -> []
+  end
+
+  type module_ = Program.t
+
+  let ast_to_json _ = `List []
+  let json_to_bytecode ~fk:_ ~fk2:_ _ = 0
+end
+
 module Names = struct
   let lang_desc = "language-description-span"
   let env = "env-area"
@@ -154,6 +170,13 @@ read(n);
 fact(n)|}
 
     let envL2 = "3 2 1"
+
+    let lamaL3 =
+      {|
+let fix = { f x ->  f ({ eta -> fix(f, eta) },x) } in 
+( let fac = { self n -> if n<=1 then 1 else  n*self(n-1) fi } in
+  write(fix(fac, 4))
+)|}
   end in
   let known =
     let ls =
@@ -161,6 +184,7 @@ fact(n)|}
       [
         ("#L1", ("Язык номер 1", (module L1 : LANG), (bcL1, lamaL1, envL1)));
         ("#L2", ("Язык номер 2", (module L2 : LANG), (bcL2, lamaL2, envL2)));
+        ("#L3", ("Язык номер 3", (module L3 : LANG), ("", lamaL3, envL2)));
       ]
     in
     let data = List.assoc "#L1" ls in
