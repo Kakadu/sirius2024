@@ -280,11 +280,11 @@ module Parser =
 
           (* Relational operators *)
           `Nona, [ostap ("<="), binop "<=";
-                  ostap ("<" ), binop "<";
                   ostap (">="), binop ">=";
-                  ostap (">" ), binop ">";
                   ostap ("=="), binop "==";
                   ostap ("<>"), binop "<>";
+                  ostap ("<" ), binop "<";
+                  ostap (">" ), binop ">";
                  ];
 
           (* Additive operators *)
